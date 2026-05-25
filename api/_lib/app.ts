@@ -4,7 +4,7 @@
 
 import express, { type Express } from "express";
 import { runAnalysis, runTts } from "./providers";
-import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER } from "../../src/lib/models";
+import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER } from "./models";
 
 export function createApiApp(): Express {
   const app = express();

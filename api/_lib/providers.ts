@@ -2,7 +2,7 @@
 // Both providers return an identical JSON object shape (see prompt.ts).
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { getModel, type ProviderId } from "../../src/lib/models";
+import { getModel, type ProviderId } from "./models";
 import {
   SYSTEM_PROMPT,
   JSON_SHAPE_INSTRUCTIONS,
