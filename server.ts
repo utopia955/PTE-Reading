@@ -6,7 +6,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { createApiApp } from "./api/_lib/app";
+import { createApiApp } from "./api/_lib/app.js";
 
 dotenv.config();
 

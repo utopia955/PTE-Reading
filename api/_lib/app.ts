@@ -3,8 +3,8 @@
 // function. The local dev server (server.ts) adds Vite middleware separately.
 
 import express, { type Express } from "express";
-import { runAnalysis, runTts } from "./providers";
-import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER } from "./models";
+import { runAnalysis, runTts } from "./providers.js";
+import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER } from "./models.js";
 
 export function createApiApp(): Express {
   const app = express();

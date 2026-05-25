@@ -2,7 +2,7 @@
 // here; the Express app routes them internally. No Vite is imported, so the
 // function bundle stays small.
 
-import { createApiApp } from "./_lib/app";
+import { createApiApp } from "./_lib/app.js";
 
 const app = createApiApp();
 

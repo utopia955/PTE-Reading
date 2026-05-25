@@ -2,12 +2,12 @@
 // Both providers return an identical JSON object shape (see prompt.ts).
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { getModel, type ProviderId } from "./models";
+import { getModel, type ProviderId } from "./models.js";
 import {
   SYSTEM_PROMPT,
   JSON_SHAPE_INSTRUCTIONS,
   REQUIRED_KEYS,
-} from "./prompt";
+} from "./prompt.js";
 
 const GOOGLE_HTTP_OPTIONS = { headers: { "User-Agent": "aistudio-build" } };
 
