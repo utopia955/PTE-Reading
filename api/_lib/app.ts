@@ -16,7 +16,7 @@ export function createApiApp(): Express {
   app.get("/api/health", (_req, res) => {
     res.json({
       ok: true,
-      googleKey: Boolean(process.env.GEMINI_API_KEY),
+      googleKey: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY),
       openrouterKey: Boolean(process.env.OPENROUTER_API_KEY),
     });
   });

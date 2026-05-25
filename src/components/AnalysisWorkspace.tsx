@@ -777,7 +777,7 @@ export default function AnalysisWorkspace({
                                   setUserOrder([]);
                                   setVerifyChecked(false);
                                 }}
-                                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs transition-all cursor-pointer border-none"
+                                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-350 font-bold text-xs transition-all cursor-pointer border-none"
                               >
                                 بازنشانی
                               </button>
@@ -851,46 +851,46 @@ export default function AnalysisWorkspace({
                             })}
                           </div>
                         </div>
-
-                        {/* Show comprehensive visual map chain */}
-                        <div className="bg-gradient-to-tr from-brand-50 to-indigo-50/20 dark:from-indigo-950/25 dark:to-slate-950 border border-indigo-200/50 dark:border-indigo-900/35 rounded-xl p-4.5 space-y-4">
-                          <h6 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 border-b border-indigo-200 dark:border-indigo-900/10 pb-2">
-                            <Sparkles className="w-4 h-4 text-indigo-550" />
-                            <span>نقشه پیوند انسجام متنی روش جفت‌یابی (Alternative Cohesive Pairing Map)</span>
-                          </h6>
-                          
-                          <div className="space-y-4">
-                            {isDigitalMarketing ? (
-                              digitalMarketingPairsInfo.map((p, pIdx) => (
-                                <div key={pIdx} className="p-3.5 bg-white/70 dark:bg-slate-900/50 border border-indigo-100 dark:border-indigo-950 rounded-lg flex flex-col gap-2 text-xs leading-relaxed">
-                                  <div className="space-y-1 text-left flex-1">
-                                    <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-955 text-indigo-700 dark:text-indigo-400 font-bold text-[9px] font-en uppercase border border-indigo-200/30">
-                                      {p.points}
-                                    </span>
-                                    <h6 className="font-extrabold text-slate-900 dark:text-white pt-1">{p.pair}: {p.title}</h6>
-                                    <p className="text-slate-600 dark:text-slate-350">{p.englishDesc}</p>
-                                    <p dir="rtl" className="text-slate-700 dark:text-slate-300 font-sans font-semibold pt-1 text-right block">{p.persianDesc}</p>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              genericPairsInfo.map((p, pIdx) => (
-                                <div key={pIdx} className="p-3.5 bg-white/70 dark:bg-slate-900/50 border border-indigo-100 dark:border-indigo-955 rounded-lg flex flex-col gap-2 text-xs leading-relaxed">
-                                  <div className="space-y-1 text-left flex-1">
-                                    <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-955 text-indigo-700 dark:text-indigo-400 font-bold text-[9px] font-en uppercase border border-indigo-200/30">
-                                      {p.points}
-                                    </span>
-                                    <h6 className="font-extrabold text-slate-900 dark:text-white pt-1">{p.pair}: {p.title}</h6>
-                                    <p className="text-slate-600 dark:text-slate-350">{p.englishDesc}</p>
-                                    <p dir="rtl" className="text-slate-700 dark:text-slate-300 font-sans font-semibold pt-1 text-right block">{p.persianDesc}</p>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
                       </div>
                     )}
+
+                    {/* Show comprehensive visual map chain (Unconditionally visible for instant analysis & alternative method display!) */}
+                    <div className="bg-gradient-to-tr from-blue-50/20 to-indigo-50/20 dark:from-indigo-955/25 dark:to-slate-950 border border-indigo-200/50 dark:border-indigo-900/35 rounded-xl p-4.5 space-y-4">
+                      <h6 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 border-b border-indigo-200 dark:border-indigo-900/10 pb-2">
+                        <Sparkles className="w-4 h-4 text-indigo-550" />
+                        <span>نقشه پیوند انسجام متنی روش جفت‌یابی (Alternative Cohesive Pairing Map)</span>
+                      </h6>
+                      
+                      <div className="space-y-4">
+                        {isDigitalMarketing ? (
+                          digitalMarketingPairsInfo.map((p, pIdx) => (
+                            <div key={pIdx} className="p-3.5 bg-white/70 dark:bg-slate-900/50 border border-indigo-100 dark:border-indigo-950 rounded-lg flex flex-col gap-2 text-xs leading-relaxed">
+                              <div className="space-y-1 text-left flex-1">
+                                <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-955 text-indigo-700 dark:text-indigo-400 font-bold text-[9px] font-en uppercase border border-indigo-200/30">
+                                  {p.points}
+                                </span>
+                                <h6 className="font-extrabold text-slate-900 dark:text-white pt-1">{p.pair}: {p.title}</h6>
+                                <p className="text-slate-600 dark:text-slate-350">{p.englishDesc}</p>
+                                <p dir="rtl" className="text-slate-700 dark:text-slate-300 font-sans font-semibold pt-1 text-right block">{p.persianDesc}</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          genericPairsInfo.map((p, pIdx) => (
+                            <div key={pIdx} className="p-3.5 bg-white/70 dark:bg-slate-900/50 border border-indigo-100 dark:border-indigo-955 rounded-lg flex flex-col gap-2 text-xs leading-relaxed">
+                              <div className="space-y-1 text-left flex-1">
+                                <span className="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-955 text-indigo-700 dark:text-indigo-400 font-bold text-[9px] font-en uppercase border border-indigo-200/30">
+                                  {p.points}
+                                </span>
+                                <h6 className="font-extrabold text-slate-900 dark:text-white pt-1">{p.pair}: {p.title}</h6>
+                                <p className="text-slate-600 dark:text-slate-350">{p.englishDesc}</p>
+                                <p dir="rtl" className="text-slate-700 dark:text-slate-300 font-sans font-semibold pt-1 text-right block">{p.persianDesc}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (

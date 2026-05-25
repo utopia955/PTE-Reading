@@ -29,6 +29,40 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+const compressClientImage = (dataUrl: string, maxW = 1200, maxH = 1200, quality = 0.85): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith("data:image")) {
+      return resolve(dataUrl);
+    }
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width;
+      let h = img.height;
+      if (w > maxW || h > maxH) {
+        if (w > h) {
+          h = Math.round((h * maxW) / w);
+          w = maxW;
+        } else {
+          w = Math.round((w * maxH) / h);
+          h = maxH;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      } else {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 export default function App() {
   const [questions, setQuestions] = useState<SavedQuestion[]>([]);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
@@ -195,10 +229,15 @@ export default function App() {
   const processFilesIntoStaging = (files: File[]) => {
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         if (e.target?.result && typeof e.target.result === "string") {
-          const res = e.target.result;
-          setStagedImages((prev) => [...prev, res]);
+          const rawUrl = e.target.result;
+          try {
+            const compressed = await compressClientImage(rawUrl);
+            setStagedImages((prev) => [...prev, compressed]);
+          } catch (err) {
+            setStagedImages((prev) => [...prev, rawUrl]);
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -242,11 +281,21 @@ export default function App() {
 
       if (!res.ok) {
         let msg = "Backend analyzer failed. Check your API key in Settings.";
-        try {
-          const errBody = await res.json();
-          if (errBody?.error) msg = errBody.error;
-        } catch {
-          /* keep default message */
+        if (res.status === 413) {
+          msg = "Screenshot payload is too large for Vercel's 4.5MB limit. Staged screenshots have been compressed mechanically, but try attaching a smaller or single screenshot.";
+        } else if (res.status === 504) {
+          msg = "Analysis timed out (Vercel gateway timeout). Please try again or choose a faster model like Gemini 3.1 Flash Lite.";
+        } else {
+          try {
+            const errBody = await res.json();
+            if (errBody?.error) {
+              msg = errBody.error;
+            } else {
+              msg = `Backend serverless function issue (HTTP ${res.status}). Ensure your server environment keys are set up correctly on Vercel.`;
+            }
+          } catch {
+            msg = `Backend status failed (HTTP ${res.status}). Verify your API key in the settings panel or check your Vercel deployment logs.`;
+          }
         }
         throw new Error(msg);
       }

@@ -48,7 +48,7 @@ export function resolveApiKey(provider: ProviderId, userKey?: string): string | 
   const trimmed = userKey && userKey.trim() !== "" ? userKey.trim() : undefined;
   if (trimmed) return trimmed;
   if (provider === "openrouter") return process.env.OPENROUTER_API_KEY || undefined;
-  return process.env.GEMINI_API_KEY || undefined;
+  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || undefined;
 }
 
 function normalizeImage(dataUrl: string): { mimeType: string; data: string; full: string } {
