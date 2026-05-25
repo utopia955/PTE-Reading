@@ -3,7 +3,7 @@
 // function. The local dev server (server.ts) adds Vite middleware separately.
 
 import express, { type Express } from "express";
-import { runAnalysis, runTts } from "./providers.js";
+import { runAnalysis, runTts, runWordsAnalysis, runOcrAnalysis } from "./providers.js";
 import { DEFAULT_MODEL_ID, DEFAULT_PROVIDER } from "./models.js";
 
 export function createApiApp(): Express {
@@ -36,6 +36,44 @@ export function createApiApp(): Express {
     } catch (err: any) {
       console.error("PTE AI Analysis Error:", err);
       res.status(500).json({ error: err?.message || "An exception occurred inside the AI coach." });
+    }
+  });
+
+  // Interactive custom text word & collocation analyzer
+  app.post("/api/analyze-words", async (req, res) => {
+    try {
+      const { text, selectedItems, model, provider, apiKey, customApiKey } = req.body || {};
+      const result = await runWordsAnalysis({
+        text,
+        selectedItems,
+        modelId: model || DEFAULT_MODEL_ID,
+        provider: provider || DEFAULT_PROVIDER,
+        apiKey: apiKey || customApiKey,
+      });
+      res.json(result);
+    } catch (err: any) {
+      console.error("PTE AI Words Analysis Error:", err);
+      res.status(500).json({ error: err?.message || "An exception occurred inside the vocabulary analyzer." });
+    }
+  });
+
+  // Base64 Image to Text verbatim extractor (OCR)
+  app.post("/api/detect-text", async (req, res) => {
+    try {
+      const { image, model, provider, apiKey, customApiKey } = req.body || {};
+      if (!image) {
+        return res.status(400).json({ error: "Missing image payload." });
+      }
+      const text = await runOcrAnalysis({
+        image,
+        modelId: model || DEFAULT_MODEL_ID,
+        provider: provider || DEFAULT_PROVIDER,
+        apiKey: apiKey || customApiKey,
+      });
+      res.json({ text });
+    } catch (err: any) {
+      console.error("OCR API error:", err);
+      res.status(500).json({ error: err?.message || "An exception occurred inside the vision OCR parser." });
     }
   });
 

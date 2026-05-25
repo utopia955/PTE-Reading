@@ -36,6 +36,7 @@ export default function AnalysisWorkspace({
 }: AnalysisWorkspaceProps) {
   const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
   const [globalTtsPlaying, setGlobalTtsPlaying] = useState(false);
+  const isTextStudy = question.category === "TXT";
 
   // State for RO interactive reorder sandbox
   const [userOrder, setUserOrder] = useState<number[]>([]);
@@ -298,8 +299,12 @@ export default function AnalysisWorkspace({
             <div className="flex gap-1 ml-2 flex-wrap">
               <button onClick={() => document.getElementById('step2')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Vocab</button>
               <button onClick={() => document.getElementById('step-translation')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Translate</button>
-              <button onClick={() => document.getElementById('step3')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Parsing</button>
-              <button onClick={() => document.getElementById('step4')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Breakdown</button>
+              {!isTextStudy && (
+                <>
+                  <button onClick={() => document.getElementById('step3')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Parsing</button>
+                  <button onClick={() => document.getElementById('step4')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Breakdown</button>
+                </>
+              )}
             </div>
           </div>
 
@@ -349,19 +354,21 @@ export default function AnalysisWorkspace({
             <div className="space-y-6">
               
               {/* Step 1: Question Type */}
-              <div id="step1" className="bg-gradient-to-tr from-blue-50/50 via-white to-blue-50/10 dark:from-blue-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-blue-200 dark:border-blue-900/30 border-l-4 border-l-blue-500 overflow-hidden shadow-md animate-slide-up">
-                <div className="p-4 bg-blue-50/30 dark:bg-blue-950/20 border-b border-blue-105/30 dark:border-blue-900/10 flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-xs font-bold font-en">
-                    1
-                  </span>
-                  <h5 className="text-sm font-bold text-slate-900 dark:text-white">
-                    PTE Question Type
-                  </h5>
+              {!isTextStudy && (
+                <div id="step1" className="bg-gradient-to-tr from-blue-50/50 via-white to-blue-50/10 dark:from-blue-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-blue-200 dark:border-blue-900/30 border-l-4 border-l-blue-500 overflow-hidden shadow-md animate-slide-up font-bold">
+                  <div className="p-4 bg-blue-50/30 dark:bg-blue-950/20 border-b border-blue-105/30 dark:border-blue-900/10 flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-xs font-bold font-en">
+                      1
+                    </span>
+                    <h5 className="text-sm font-bold text-slate-900 dark:text-white">
+                      PTE Question Type
+                    </h5>
+                  </div>
+                  <div className="p-5 font-en font-bold text-lg text-blue-600 dark:text-blue-400 tracking-wide">
+                    {payload.step1_questionType || "Fill in the Blanks"}
+                  </div>
                 </div>
-                <div className="p-5 font-en font-bold text-lg text-blue-600 dark:text-blue-400 tracking-wide">
-                  {payload.step1_questionType || "Fill in the Blanks"}
-                </div>
-              </div>
+              )}
 
               {/* Step 2: Collocations */}
               <div id="step2" className="bg-gradient-to-tr from-amber-50/50 via-white to-amber-50/11 dark:from-amber-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-amber-200 dark:border-amber-900/40 border-l-4 border-l-amber-500 overflow-hidden shadow-md animate-slide-up">
@@ -546,7 +553,9 @@ export default function AnalysisWorkspace({
               )}
 
               {/* Step 3: Sentence Parsing */}
-              <div id="step3" className="bg-gradient-to-tr from-indigo-50/50 via-white to-indigo-50/11 dark:from-indigo-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-indigo-200 dark:border-indigo-900/40 border-l-4 border-l-indigo-500 overflow-hidden shadow-md animate-slide-up">
+              {!isTextStudy && (
+                <>
+                  <div id="step3" className="bg-gradient-to-tr from-indigo-50/50 via-white to-indigo-50/11 dark:from-indigo-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-indigo-200 dark:border-indigo-900/40 border-l-4 border-l-indigo-500 overflow-hidden shadow-md animate-slide-up">
                 <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/20 border-b border-indigo-101/30 dark:border-indigo-900/10 flex items-center gap-2">
                   <span className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold font-en">
                     3
@@ -1025,7 +1034,9 @@ export default function AnalysisWorkspace({
                   </div>
                 </div>
               </div>
-            </div>
+            </>
+          )}
+        </div>
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center border border-slate-200 dark:border-slate-800 text-slate-400 text-sm">
               Failed to parse study report. Please check your model settings and screenshot quality.

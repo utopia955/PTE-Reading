@@ -14,6 +14,7 @@ import Sidebar from "./components/Sidebar";
 import AnalysisWorkspace from "./components/AnalysisWorkspace";
 import NotesModal from "./components/NotesModal";
 import CollocationsHub from "./components/CollocationsHub";
+import TextStudyWorkspace from "./components/TextStudyWorkspace";
 import {
   GraduationCap,
   BookMarked,
@@ -91,6 +92,7 @@ export default function App() {
 
   // Vocabulary & Collocations bank toggle
   const [isCollocationsReviewActive, setIsCollocationsReviewActive] = useState<boolean>(false);
+  const [isTextStudyActive, setIsTextStudyActive] = useState<boolean>(false);
 
   // Toasts
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "info" | "warning" | "error" }[]>([]);
@@ -463,6 +465,7 @@ export default function App() {
           onSelectQuestion={(id) => {
             setSelectedQuestionId(id);
             setIsCollocationsReviewActive(false);
+            setIsTextStudyActive(false);
           }}
           onFilterChange={(f) => setActiveFilter(f)}
           onSearchChange={(q) => setSearchQuery(q)}
@@ -470,11 +473,22 @@ export default function App() {
           onGoHome={() => {
             setSelectedQuestionId(null);
             setIsCollocationsReviewActive(false);
+            setIsTextStudyActive(false);
           }}
           onNewUploadTrigger={() => fileInputRef.current?.click()}
-          onToggleCollocationsReview={() => setIsCollocationsReviewActive(true)}
+          onToggleCollocationsReview={() => {
+            setIsCollocationsReviewActive(true);
+            setIsTextStudyActive(false);
+            setSelectedQuestionId(null);
+          }}
           onDeleteQuestion={(id) => triggerDeleteConfirm(id)}
           onToggleStar={handleToggleStar}
+          isTextStudyActive={isTextStudyActive}
+          onToggleTextStudy={() => {
+            setIsTextStudyActive(true);
+            setIsCollocationsReviewActive(false);
+            setSelectedQuestionId(null);
+          }}
         />
       )}
 
@@ -494,7 +508,11 @@ export default function App() {
               <BookMarked className="w-5 h-5" />
             </div>
             <button
-              onClick={() => setSelectedQuestionId(null)}
+              onClick={() => {
+                setSelectedQuestionId(null);
+                setIsTextStudyActive(false);
+                setIsCollocationsReviewActive(false);
+              }}
               className="min-w-0 flex-1 text-left flex flex-col justify-center cursor-pointer bg-transparent border-none outline-none p-0 focus:outline-none"
               title="Return to home dashboard"
             >
@@ -512,6 +530,7 @@ export default function App() {
               onClick={() => {
                 setSelectedQuestionId(null);
                 setIsCollocationsReviewActive(false);
+                setIsTextStudyActive(false);
               }}
               className="px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-705 bg-white dark:bg-[#1E293B] text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs font-bold"
             >
@@ -669,8 +688,64 @@ export default function App() {
             </div>
           )}
 
+          {/* Custom Clipboard Text Study Workspace */}
+          {isTextStudyActive && !isAnalyzing && (
+            <div className="max-w-5xl mx-auto w-full relative z-10 transition-all">
+              <TextStudyWorkspace
+                onSaveQuestion={async (data) => {
+                  try {
+                    const questionId = Math.random().toString(36).substring(2, 11);
+                    // Create a simulated SavedQuestion object with category "TXT"
+                    const payload = {
+                      step1_questionType: "Text Clipboard Study",
+                      passageTitle: data.title,
+                      fullPassageTranslation: data.text,
+                      step2_collocations: data.collocations,
+                      step2_hardWords: data.hardWords,
+                      step3_sentenceParsing: [],
+                      step4_optionsBreakdown: [],
+                      step5_grammarTips: [],
+                      step6_finalAnswers: [],
+                      confidenceLevel: "HIGH",
+                      confidenceReason: "Custom selected vocabulary analyzed."
+                    };
+
+                    const savedItem = {
+                      id: questionId,
+                      title: data.title,
+                      category: "TXT" as const,
+                      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                      timestamp: Date.now(),
+                      note: "Study of copied pasted text.",
+                      status: "needs-review" as const,
+                      images: [],
+                      rawResponse: JSON.stringify(payload),
+                    };
+
+                    await StorageManager.save(savedItem);
+
+                    // Add toast
+                    showToast("Saved successfully to your database!", "success");
+                    // Refresh questions list
+                    refreshQuestions();
+                    // Set active
+                    setSelectedQuestionId(questionId);
+                    setIsTextStudyActive(false);
+                  } catch (err) {
+                    showToast("Could not save study session.", "error");
+                  }
+                }}
+                onClose={() => setIsTextStudyActive(false)}
+                provider={provider}
+                apiModel={apiModel}
+                googleKey={googleKey}
+                openrouterKey={openrouterKey}
+              />
+            </div>
+          )}
+
           {/* Empty desktop state / Onboarding layout formatted as a premium bento matrix */}
-          {!isCollocationsReviewActive && !currentQuestion && !isAnalyzing && (
+          {!isCollocationsReviewActive && !isTextStudyActive && !currentQuestion && !isAnalyzing && (
             <div className="max-w-4xl mx-auto w-full mt-4 space-y-6">
               
               {/* Premium Hero Bento Card */}

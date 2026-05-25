@@ -1,4 +1,4 @@
-export type QuestionCategory = "FIB-R" | "FIB-RW" | "RO" | "MCQ";
+export type QuestionCategory = "FIB-R" | "FIB-RW" | "RO" | "MCQ" | "TXT";
 export type MasteryStatus = "needs-review" | "mastered" | "critical";
 
 export interface CollocationItem {

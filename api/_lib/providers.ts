@@ -319,6 +319,183 @@ function sampleRateFromMime(mime?: string): number {
   return m ? parseInt(m[1], 10) : 24000;
 }
 
+const WORDS_ANALYSIS_SYSTEM_PROMPT = `You are an expert PTE Academic and General Reading & Vocabulary Coach.
+The user will provide a text passage they are studying (which could be a Read Aloud prompt, Essay snippet, etc.), along with a specific roster of selected words, collocations, or multi-word academic expressions from that passage.
+
+Critically analyze these selected items in the direct context of the passage.
+
+Produce a highly professional, JSON structured guide. For EACH selected item, classify it as either a 'collocation' (academic multi-word phrase, idiomatic expression, or verb-noun pairing) or a 'hardWord' (a single difficult or advanced academic word) based on standard linguistic definitions.
+
+Provide:
+1. A descriptive, academic-style passage title (2 to 5 words).
+2. A pristine, beautiful, fluent Persian translation of the entire original passage context (separated by a blank line after the original English text).
+3. For collocations (step2_collocations):
+   - englishCollocation: The exact phrase.
+   - persianMeaning: High quality, context-appropriate Persian meaning.
+   - importance: Why it's crucial for PTE exam task, academic value, or grammar tip.
+   - example: A natural, clear standard English example application.
+4. For single hard words (step2_hardWords):
+   - word: The exact word.
+   - phonetic: High contrast, precise IPA pronunciation (e.g., /prəˈfaʊnd/).
+   - meaning: Fluent translation of the word's meaning in Persian.
+   - example: An elegant, practical standard English example sentence.`;
+
+const WORDS_RESPONSE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    passageTitle: { type: Type.STRING },
+    fullPassageTranslation: {
+      type: Type.STRING,
+      description: "Original English passage text followed by a double line break, and its beautiful, cohesive Persian translation.",
+    },
+    step2_collocations: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          englishCollocation: { type: Type.STRING },
+          persianMeaning: { type: Type.STRING },
+          importance: { type: Type.STRING },
+          example: { type: Type.STRING },
+        },
+        required: ["englishCollocation", "persianMeaning", "importance"],
+      },
+    },
+    step2_hardWords: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          word: { type: Type.STRING },
+          phonetic: { type: Type.STRING },
+          meaning: { type: Type.STRING },
+          example: { type: Type.STRING },
+        },
+        required: ["word", "meaning"],
+      },
+    },
+  },
+  required: ["passageTitle", "fullPassageTranslation", "step2_collocations", "step2_hardWords"],
+};
+
+export interface AnalyzeWordsArgs {
+  provider: ProviderId;
+  modelId: string;
+  apiKey?: string;
+  text: string;
+  selectedItems: string[];
+}
+
+async function runGoogleWordsAnalysis(args: AnalyzeWordsArgs, apiKey: string): Promise<any> {
+  const client = new GoogleGenAI({ apiKey, httpOptions: GOOGLE_HTTP_OPTIONS });
+  const targetModel = resolveModelString(args.modelId, "google");
+
+  const prompt = `Passage Context:\n${args.text}\n\nSelected Items to Analyze:\n${JSON.stringify(args.selectedItems)}`;
+
+  const response = await client.models.generateContent({
+    model: targetModel,
+    contents: [
+      { text: WORDS_ANALYSIS_SYSTEM_PROMPT },
+      { text: prompt }
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: WORDS_RESPONSE_SCHEMA,
+    },
+  });
+
+  if (!response.text) throw new Error("No payload returned from the Google vocabulary analyzer.");
+  return extractJson(response.text);
+}
+
+async function runOpenRouterWordsAnalysis(args: AnalyzeWordsArgs, apiKey: string): Promise<any> {
+  const targetModel = resolveModelString(args.modelId, "openrouter");
+
+  const prompt = `Passage Context:\n${args.text}\n\nSelected Items to Analyze:\n${JSON.stringify(args.selectedItems)}`;
+  const jsonInstructions = `\n\nReturn EXACTLY a JSON response with this shape:
+{
+  "passageTitle": string,
+  "fullPassageTranslation": string,
+  "step2_collocations": [ { "englishCollocation": string, "persianMeaning": string, "importance": string, "example": string } ],
+  "step2_hardWords": [ { "word": string, "phonetic": string, "meaning": string, "example": string } ]
+}`;
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.APP_URL || "https://pte-core-reading-coach.vercel.app",
+      "X-Title": "PTE Core Reading Coach",
+    },
+    body: JSON.stringify({
+      model: targetModel,
+      messages: [
+        { role: "system", content: WORDS_ANALYSIS_SYSTEM_PROMPT + jsonInstructions },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+    }),
+  });
+
+  const json: any = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(json?.error?.message || `OpenRouter request failed (${res.status}).`);
+  }
+  const text = json?.choices?.[0]?.message?.content;
+  if (!text) throw new Error("OpenRouter words analyzer returned no content.");
+  return extractJson(typeof text === "string" ? text : JSON.stringify(text));
+}
+
+export async function runWordsAnalysis(args: AnalyzeWordsArgs): Promise<any> {
+  if (!args.text || !args.text.trim()) {
+    throw new Error("No text context supplied.");
+  }
+  if (!args.selectedItems || args.selectedItems.length === 0) {
+    throw new Error("No specific words or collocations were selected for study.");
+  }
+  const apiKey = resolveApiKey(args.provider, args.apiKey);
+  if (!apiKey) {
+    const where = args.provider === "openrouter" ? "OpenRouter" : "Google";
+    throw new Error(`Missing ${where} API key. Add one in Settings or configure it on the server.`);
+  }
+  try {
+    const rawResult = await (args.provider === "openrouter"
+      ? runOpenRouterWordsAnalysis(args, apiKey)
+      : runGoogleWordsAnalysis(args, apiKey));
+    
+    // Normalize into standard AnalysisPayload compatible fields
+    return {
+      step1_questionType: "Text Clipboard Study",
+      passageTitle: rawResult.passageTitle || "Pasted Passage Study",
+      fullPassageTranslation: rawResult.fullPassageTranslation || args.text,
+      step2_collocations: rawResult.step2_collocations || [],
+      step2_hardWords: rawResult.step2_hardWords || [],
+      step3_sentenceParsing: [],
+      step4_optionsBreakdown: [],
+      step5_grammarTips: [],
+      step6_finalAnswers: [],
+      confidenceLevel: "HIGH",
+      confidenceReason: "Custom selected vocabulary analyzed."
+    };
+  } catch (error: any) {
+    console.error(`[runWordsAnalysis Error] provider=${args.provider}`, error);
+    let msg = error?.message || String(error);
+    try {
+      if (msg.startsWith("{") && msg.includes('"error"')) {
+        const parsed = JSON.parse(msg);
+        if (parsed.error?.message) {
+          msg = parsed.error.message;
+        }
+      }
+    } catch {
+      // Keep original msg
+    }
+    throw new Error(msg);
+  }
+}
+
 export async function runTts(args: TtsArgs): Promise<string> {
   const apiKey = resolveApiKey("google", args.apiKey);
   if (!apiKey) {
@@ -345,3 +522,77 @@ export async function runTts(args: TtsArgs): Promise<string> {
   // Gemini returns raw PCM (L16). Wrap it in a WAV container so browsers play it.
   return pcmToWavBase64(base64Audio, sampleRateFromMime(part?.inlineData?.mimeType));
 }
+
+export interface OcrArgs {
+  provider: ProviderId;
+  modelId: string;
+  apiKey?: string;
+  image: string;
+}
+
+async function runGoogleOcr(args: OcrArgs, apiKey: string): Promise<string> {
+  const client = new GoogleGenAI({ apiKey, httpOptions: GOOGLE_HTTP_OPTIONS });
+  const targetModel = resolveModelString(args.modelId, "google");
+
+  const { mimeType, data } = normalizeImage(args.image);
+  const response = await client.models.generateContent({
+    model: targetModel,
+    contents: [
+      { text: "Extract all English readable text from this image exactly. Do not add any conversational intro, extra comments, or styling. Just output the clean extracted text verbatim." },
+      { inlineData: { mimeType, data } }
+    ],
+  });
+
+  if (!response.text) throw new Error("No text detected in the uploaded image.");
+  return response.text.trim();
+}
+
+async function runOpenRouterOcr(args: OcrArgs, apiKey: string): Promise<string> {
+  const targetModel = resolveModelString(args.modelId, "openrouter");
+  const { full } = normalizeImage(args.image);
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.APP_URL || "https://pte-core-reading-coach.vercel.app",
+      "X-Title": "PTE Core Reading Coach",
+    },
+    body: JSON.stringify({
+      model: targetModel,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract all English readable text from this image exactly. Do not add any conversational intro, extra comments, or styling. Just output the clean extracted text verbatim." },
+            { type: "image_url", image_url: { url: full } }
+          ]
+        }
+      ],
+      temperature: 0.1,
+    }),
+  });
+
+  const json: any = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(json?.error?.message || `OpenRouter OCR failed (${res.status}).`);
+  }
+  const text = json?.choices?.[0]?.message?.content;
+  if (!text) throw new Error("No text detected or extracted from the uploaded image via OpenRouter.");
+  return text.trim();
+}
+
+export async function runOcrAnalysis(args: OcrArgs): Promise<string> {
+  const apiKey = resolveApiKey(args.provider, args.apiKey);
+  if (!apiKey) {
+    const where = args.provider === "openrouter" ? "OpenRouter" : "Google";
+    throw new Error(`Missing ${where} API key. Add one in Settings or configure it.`);
+  }
+  if (args.provider === "openrouter") {
+    return runOpenRouterOcr(args, apiKey);
+  } else {
+    return runGoogleOcr(args, apiKey);
+  }
+}
+

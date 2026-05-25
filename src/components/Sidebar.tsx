@@ -13,6 +13,7 @@ import {
   BookMarked,
   Trash2,
   Star,
+  FileText,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -31,6 +32,8 @@ interface SidebarProps {
   onToggleCollocationsReview: () => void;
   onDeleteQuestion: (id: string) => void;
   onToggleStar: (id: string) => void;
+  onToggleTextStudy: () => void;
+  isTextStudyActive: boolean;
 }
 
 export default function Sidebar({
@@ -49,6 +52,8 @@ export default function Sidebar({
   onToggleCollocationsReview,
   onDeleteQuestion,
   onToggleStar,
+  onToggleTextStudy,
+  isTextStudyActive,
 }: SidebarProps) {
   // Filter questions based on category filter and search term
   const filteredQuestions = React.useMemo(() => {
@@ -170,6 +175,17 @@ export default function Sidebar({
           <PlusCircle className="w-4 h-4" />
           <span>Upload Screenshot</span>
         </button>
+        <button
+          onClick={onToggleTextStudy}
+          className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all text-sm shadow border relative z-10 cursor-pointer ${
+            isTextStudyActive
+              ? "bg-indigo-600 hover:bg-indigo-700 text-white border-transparent shadow-lg shadow-indigo-500/15"
+              : "bg-white dark:bg-[#1E293B] hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700/80"
+          }`}
+        >
+          <FileText className="w-4 h-4 text-indigo-500" />
+          <span>Study Copied Text</span>
+        </button>
       </div>
 
       {/* History Section */}
@@ -195,7 +211,7 @@ export default function Sidebar({
 
           {/* Categories filters */}
           <div className="flex flex-wrap gap-1" id="categoryFilterContainer">
-            {(["all", "starred", "FIB-R", "FIB-RW", "RO", "MCQ"] as const).map((cat) => {
+            {(["all", "starred", "FIB-R", "FIB-RW", "RO", "MCQ", "TXT"] as const).map((cat) => {
               const isActive = activeFilter === cat;
               const niceNameMap: { [key: string]: string } = {
                 all: "All",
@@ -204,6 +220,7 @@ export default function Sidebar({
                 "FIB-RW": "FIB RW",
                 RO: "Reorder",
                 MCQ: "MCQ",
+                TXT: "Text Study 📝",
               };
               return (
                 <button
