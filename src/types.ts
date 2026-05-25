@@ -8,6 +8,13 @@ export interface CollocationItem {
   example?: string;
 }
 
+export interface HardWordItem {
+  word: string;
+  phonetic?: string;
+  meaning: string;
+  example?: string;
+}
+
 export interface SentenceParsingItem {
   englishSentence: string;
   persianTranslation: string;
@@ -41,6 +48,7 @@ export interface AnalysisPayload {
   step1_questionType: string;
   fullPassageTranslation: string;
   step2_collocations: CollocationItem[];
+  step2_hardWords?: HardWordItem[];
   step3_sentenceParsing: SentenceParsingItem[];
   step4_optionsBreakdown: OptionsBreakdownItem[];
   step5_grammarTips: GrammarTipItem[];

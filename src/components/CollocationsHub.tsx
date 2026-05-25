@@ -552,9 +552,9 @@ export default function CollocationsHub({
         {activeTab === "database" && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2.5 bg-gradient-to-tr from-emerald-600 to-teal-600 hover:from-emerald-750 hover:to-teal-750 text-white rounded-xl text-xs font-extrabold transition-all duration-200 active:scale-95 shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer border-none"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-full text-xs font-extrabold transition-all duration-200 active:scale-95 shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:shadow-[0_4px_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-1.5 cursor-pointer border-none"
           >
-            <Plus className="w-4 h-4 text-emerald-100" />
+            <Plus className="w-4 h-4 text-emerald-50" strokeWidth={3} />
             <span>Add Custom Collocation</span>
           </button>
         )}
@@ -562,27 +562,27 @@ export default function CollocationsHub({
 
       {/* --- Filter & Category Controllers (Shown when not in active session) --- */}
       {(!fcStarted && !quizStarted) && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-8 relative">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative flex-1">
             <input
               type="text"
               placeholder="Search academic collocations, Persian meanings, or context..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-white placeholder-slate-401 dark:placeholder-slate-500 pl-10 pr-4 py-3 rounded-2xl focus:outline-none focus:border-indigo-550 shadow-xs text-left"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 pl-10 pr-4 py-3 rounded-2xl focus:outline-none focus:border-indigo-550 shadow-xs text-left cursor-text"
             />
             <Search className="w-4 h-4 absolute left-3.5 top-4 text-slate-400 dark:text-slate-500" />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer"
+                className="absolute right-3.5 top-3.5 text-xs font-bold text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer font-en"
               >
                 Clear
               </button>
             )}
           </div>
 
-          <div className="md:col-span-4 flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex flex-wrap items-center gap-1.5" id="collocationCategoryFilters">
             {(["all", "FIB-R", "FIB-RW", "RO", "MCQ"] as const).map((cat) => {
               const isActive = selectedCategory === cat;
               const niceNames: Record<string, string> = {
@@ -596,10 +596,10 @@ export default function CollocationsHub({
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer flex-1 text-center ${
+                  className={`px-4 py-2 min-h-[36px] rounded-full text-xs font-bold font-en border transition-all cursor-pointer whitespace-nowrap ${
                     isActive
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                      : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850"
+                      ? "bg-indigo-600 dark:bg-indigo-500 border-indigo-600 dark:border-indigo-500 text-white shadow-md shadow-indigo-600/20 scale-102"
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700"
                   }`}
                 >
                   {niceNames[cat]}

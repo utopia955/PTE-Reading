@@ -116,6 +116,19 @@ const GOOGLE_RESPONSE_SCHEMA = {
         required: ["englishCollocation", "persianMeaning", "importance"],
       },
     },
+    step2_hardWords: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          word: { type: Type.STRING },
+          phonetic: { type: Type.STRING },
+          meaning: { type: Type.STRING },
+          example: { type: Type.STRING },
+        },
+        required: ["word", "meaning"],
+      },
+    },
     step3_sentenceParsing: {
       type: Type.ARRAY,
       items: {

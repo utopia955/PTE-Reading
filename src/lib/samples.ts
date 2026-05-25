@@ -30,6 +30,20 @@ export const sampleQuestions: { [key: number]: Omit<SavedQuestion, "id" | "date"
           example: "Technological advancements have had a profound impact on social connections."
         }
       ],
+      step2_hardWords: [
+        {
+          word: "profound",
+          phonetic: "/prəˈfaʊnd/",
+          meaning: "عمیق، ژرف، اساسی (صفت)",
+          example: "The scientific discovery had a profound impact on humanity."
+        },
+        {
+          word: "compromise",
+          phonetic: "/ˈkɒm.prə.maɪz/",
+          meaning: "مصالحه، سازش، توافق مابین (اسم/فعل)",
+          example: "We had to reach a compromise to complete the project."
+        }
+      ],
       step3_sentenceParsing: [
         {
           englishSentence: "Global trade networks have expanded rapidly in the last century, which has forced many organizations to adapt to diverse international regulations.",
@@ -112,6 +126,20 @@ export const sampleQuestions: { [key: number]: Omit<SavedQuestion, "id" | "date"
           persianMeaning: "انتشار یا انتقال دادن اطلاعات به دیگران",
           importance: "ساختار عبارتی فعل‌دار در رایتینگ و ریدینگ.",
           example: "We need an active system to pass on information to our remote colleagues."
+        }
+      ],
+      step2_hardWords: [
+        {
+          word: "perceive",
+          phonetic: "/pəˈsiːv/",
+          meaning: "درک کردن، فهمیدن، حس کردن (فعل)",
+          example: "We perceive the world differently based on our unique cultures."
+        },
+        {
+          word: "convey",
+          phonetic: "/kənˈveɪ/",
+          meaning: "رساندن، انتقال دادن (مفهوم یا پیام) (فعل)",
+          example: "It is important to convey your thoughts clearly to avoid misunderstandings."
         }
       ],
       step3_sentenceParsing: [

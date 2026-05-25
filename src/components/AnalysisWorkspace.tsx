@@ -176,10 +176,20 @@ export default function AnalysisWorkspace({
   };
 
   const handleExportVocabulary = () => {
-    if (!payload || !payload.step2_collocations) return;
-    const vocabStr = payload.step2_collocations
-      .map((c) => `${c.englishCollocation} - ${c.persianMeaning}`)
-      .join("\n");
+    if (!payload) return;
+    let vocabStr = "";
+    if (payload.step2_collocations && payload.step2_collocations.length > 0) {
+      vocabStr += "--- KEY COLLOCATIONS ---\n" + payload.step2_collocations
+        .map((c) => `${c.englishCollocation} - ${c.persianMeaning}`)
+        .join("\n") + "\n\n";
+    }
+    if (payload.step2_hardWords && payload.step2_hardWords.length > 0) {
+      vocabStr += "--- HARD WORDS FOR REVIEW ---\n" + payload.step2_hardWords
+        .map((w) => `${w.word} ${w.phonetic || ""} - ${w.meaning}`)
+        .join("\n") + "\n";
+    }
+
+    if (!vocabStr) return;
 
     const blob = new Blob([vocabStr], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -364,58 +374,124 @@ export default function AnalysisWorkspace({
                   </h5>
                 </div>
                 <div className="p-5 divide-y divide-slate-100 dark:divide-slate-800 space-y-4 relative z-10">
-                  {payload.step2_collocations && payload.step2_collocations.length > 0 ? (
-                    payload.step2_collocations.map((item, idx) => (
-                      <div key={idx} className="py-4 first:pt-0 last:pb-0 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h6 className="text-sm font-extrabold text-slate-900 dark:text-white font-en">
-                            {item.englishCollocation}
-                          </h6>
-                          <button
-                            onClick={() => handleTtsPlayback(item.englishCollocation, `col-${idx}`)}
-                            className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900 text-slate-500 hover:text-blue-600 transition-all text-xs cursor-pointer border-none"
-                            title="Listen Pronunciation"
-                          >
-                            {ttsLoadingId === `col-${idx}` ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Play className="w-3 h-3 translation-x-[0.5px]" />
-                            )}
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-1">
-                          <div className="p-3.5 bg-amber-50/40 dark:bg-amber-950/15 border border-amber-200/40 dark:border-amber-900/20 rounded-xl shadow-xs">
-                            <span className="text-[10px] text-amber-700 dark:text-amber-400 block mb-1 font-bold">
-                              Persian Meaning & Context:
-                            </span>
-                            <p
-                              dir="auto"
-                              className="text-slate-905 dark:text-white font-sans text-sm leading-relaxed font-semibold text-start block"
+                  {/* Key Collocations Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block w-1.5 h-4 rounded-full bg-amber-500"></span>
+                      <h6 className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                        Academic Collocations (کالوکیشن‌های آکادمیک)
+                      </h6>
+                    </div>
+                    {payload.step2_collocations && payload.step2_collocations.length > 0 ? (
+                      payload.step2_collocations.map((item, idx) => (
+                        <div key={idx} className="py-4 first:pt-0 last:pb-0 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h6 className="text-sm font-extrabold text-slate-900 dark:text-white font-en">
+                              {item.englishCollocation}
+                            </h6>
+                            <button
+                              onClick={() => handleTtsPlayback(item.englishCollocation, `col-${idx}`)}
+                              className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-amber-100 dark:hover:bg-amber-900 text-slate-500 hover:text-amber-600 transition-all text-xs cursor-pointer border-none"
+                              title="Listen Pronunciation"
                             >
-                              {formatTextWithBold(item.persianMeaning)}
-                            </p>
+                              {ttsLoadingId === `col-${idx}` ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Play className="w-3 h-3 translation-x-[0.5px]" />
+                              )}
+                            </button>
                           </div>
-                          <div className="p-3.5 bg-emerald-50/40 dark:bg-emerald-950/15 border border-emerald-200/40 dark:border-emerald-900/20 rounded-xl shadow-xs">
-                            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 block mb-1 font-bold">
-                              Exam Relevance & Tip:
-                            </span>
-                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-semibold">
-                              {formatTextWithBold(item.importance)}
-                            </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-1">
+                            <div className="p-3.5 bg-amber-50/40 dark:bg-amber-950/15 border border-amber-200/40 dark:border-amber-900/20 rounded-xl shadow-xs">
+                              <span className="text-[10px] text-amber-700 dark:text-amber-400 block mb-1 font-bold">
+                                Persian Meaning & Context:
+                              </span>
+                              <p
+                                dir="auto"
+                                className="text-slate-905 dark:text-white font-sans text-sm leading-relaxed font-semibold text-start block"
+                              >
+                                {formatTextWithBold(item.persianMeaning)}
+                              </p>
+                            </div>
+                            <div className="p-3.5 bg-emerald-50/40 dark:bg-emerald-950/15 border border-emerald-200/40 dark:border-emerald-900/20 rounded-xl shadow-xs">
+                              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 block mb-1 font-bold">
+                                Exam Relevance & Tip:
+                              </span>
+                              <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-semibold">
+                                {formatTextWithBold(item.importance)}
+                              </p>
+                            </div>
                           </div>
+                          {item.example && (
+                            <div className="mt-2 p-2.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-100 dark:border-slate-800 font-en text-xs text-blue-700 dark:text-blue-300">
+                              <span className="text-[9px] text-slate-450 block mb-1 uppercase font-bold tracking-wider">
+                                Sentence Example:
+                              </span>
+                              {formatTextWithBold(item.example)}
+                            </div>
+                          )}
                         </div>
-                        {item.example && (
-                          <div className="mt-2 p-2.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-100 dark:border-slate-800 font-en text-xs text-blue-700 dark:text-blue-300">
-                            <span className="text-[9px] text-slate-450 block mb-1 uppercase font-bold tracking-wider">
-                              Sentence Example:
-                            </span>
-                            {formatTextWithBold(item.example)}
-                          </div>
-                        )}
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-xs text-slate-400">No collocations currently indexed.</div>
+                    )}
+                  </div>
+
+                  {/* Hard Words Section */}
+                  {payload.step2_hardWords && payload.step2_hardWords.length > 0 && (
+                    <div className="pt-6 mt-6 border-t border-slate-200/60 dark:border-slate-800 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-1.5 h-4 rounded-full bg-indigo-500"></span>
+                        <h6 className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                          Difficult Academic Vocabulary (واژگان دشوار آکادمیک)
+                        </h6>
                       </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-xs text-slate-400">No collocations currently indexed.</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {payload.step2_hardWords.map((wordItem, wIdx) => (
+                          <div 
+                            key={wIdx} 
+                            className="p-4 bg-slate-50/40 dark:bg-slate-950/30 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl space-y-2.5 relative group hover:border-amber-200 dark:hover:border-amber-900/30 transition-all duration-200 shadow-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-baseline gap-2 flex-wrap text-start">
+                                <span className="text-sm font-extrabold text-slate-900 dark:text-white font-en">
+                                  {wordItem.word}
+                                </span>
+                                {wordItem.phonetic && (
+                                  <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono font-medium">
+                                    {wordItem.phonetic}
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleTtsPlayback(wordItem.word, `word-${wIdx}`)}
+                                className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-slate-500 hover:text-indigo-600 transition-all text-[10px] cursor-pointer border-none opacity-85 group-hover:opacity-100"
+                                title="Listen pronunciation"
+                              >
+                                {ttsLoadingId === `word-${wIdx}` ? (
+                                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                ) : (
+                                  <Play className="w-2.5 h-2.5" />
+                                )}
+                              </button>
+                            </div>
+                            
+                            <div className="p-3 bg-amber-50/20 dark:bg-amber-950/10 border border-amber-200/20 dark:border-amber-900/10 rounded-xl" dir="auto">
+                              <p className="text-xs text-slate-900 dark:text-slate-100 font-sans font-bold text-start leading-relaxed">
+                                {formatTextWithBold(wordItem.meaning)}
+                              </p>
+                            </div>
+
+                            {wordItem.example && (
+                              <div className="text-[11px] leading-relaxed text-slate-650 dark:text-slate-400 font-en px-1 text-start">
+                                <span className="font-bold text-slate-400 dark:text-slate-500 text-[9px] block uppercase tracking-wider mb-0.5">Sentence Example:</span>
+                                {formatTextWithBold(wordItem.example)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
