@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidQuestion(data) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'category', 'timestamp', 'status', 'rawResponse'])
+        && data.keys().size() <= 12
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128 && data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 1024
+        && data.category is string && (data.category == 'FIB-R' || data.category == 'FIB-RW' || data.category == 'RO' || data.category == 'MCQ' || data.category == 'TXT')
+        && data.timestamp is number
+        && data.status is string && (data.status == 'needs-review' || data.status == 'mastered' || data.status == 'critical')
+        && data.rawResponse is string && data.rawResponse.size() <= 1048576;
+    }
+
+    match /questions/{questionId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid && isValidId(questionId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(questionId) && questionId == incoming().id && isValidQuestion(incoming());
+      allow update: if isSignedIn() && isValidId(questionId) && questionId == incoming().id && isValidQuestion(incoming()) && incoming().userId == existing().userId && incoming().id == existing().id;
+      allow delete: if isSignedIn() && isValidId(questionId) && existing().userId == request.auth.uid;
+    }
+  }
+}

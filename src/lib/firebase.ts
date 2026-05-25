@@ -1,0 +1,18 @@
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  projectId: "gen-lang-client-0940687088",
+  appId: "1:706956906442:web:aa833e65acf8cbfd7e8933",
+  apiKey: "AIzaSyAsBijZlIUbcHM7u9K_3tsslWzZ2XPFBTs",
+  authDomain: "gen-lang-client-0940687088.firebaseapp.com",
+  firestoreDatabaseId: "ai-studio-20da81ae-b7d8-4585-ace8-1cf7a08b4167",
+  storageBucket: "gen-lang-client-0940687088.firebasestorage.app",
+  messagingSenderId: "706956906442"
+};
+
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();

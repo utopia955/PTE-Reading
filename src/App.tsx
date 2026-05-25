@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { onAuthStateChanged, User, signInWithPopup, signOut } from "firebase/auth";
+import { auth, googleProvider } from "./lib/firebase";
 import { SavedQuestion, QuestionCategory, MasteryStatus } from "./types";
 import { StorageManager } from "./lib/storage";
 import {
@@ -101,6 +103,43 @@ export default function App() {
   // Hidden file input ref
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Firebase auth state tracking
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      try {
+        await StorageManager.init();
+        const items = await StorageManager.getAll();
+        setQuestions(items);
+      } catch (err) {
+        console.error("Storage load error on auth change:", err);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      showToast("Signed in successfully with Google. Your history is synced!", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Failed to sign in. Please try again.", "error");
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      showToast("Signed out. History sync suspended.", "info");
+    } catch (err: any) {
+      console.error(err);
+      showToast("Failed to sign out.", "error");
+    }
+  };
+
   // Initial DB instantiation & Theme detection
   useEffect(() => {
     const initApp = async () => {
@@ -113,10 +152,6 @@ export default function App() {
         setIsDarkMode(true);
         document.documentElement.classList.add("dark");
       }
-
-      await StorageManager.init();
-      const items = await StorageManager.getAll();
-      setQuestions(items);
 
       // Load active config (migrating from the older single-key layout).
       const savedProvider = localStorage.getItem("selected_provider") as ProviderId | null;
@@ -544,6 +579,9 @@ export default function App() {
             setIsCollocationsReviewActive(false);
             setSelectedQuestionId(null);
           }}
+          user={user}
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
         />
       )}
 
