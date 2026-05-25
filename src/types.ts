@@ -59,4 +59,5 @@ export interface SavedQuestion {
   status: MasteryStatus;
   images: string[];
   rawResponse: string; // Stored JSON payload string
+  isStarred?: boolean;
 }

@@ -92,9 +92,6 @@ export default function App() {
   // Vocabulary & Collocations bank toggle
   const [isCollocationsReviewActive, setIsCollocationsReviewActive] = useState<boolean>(false);
 
-  // Full focus mode layout
-  const [isFullScreenAnalysis, setIsFullScreenAnalysis] = useState<boolean>(false);
-
   // Toasts
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "info" | "warning" | "error" }[]>([]);
 
@@ -345,7 +342,6 @@ export default function App() {
       setQuestions(updated);
       setSelectedQuestionId(questionId);
       setStagedImages([]);
-      setIsFullScreenAnalysis(true);
 
       showToast("Advanced passage dissection completed successfully!", "success");
     } catch (err: any) {
@@ -382,6 +378,16 @@ export default function App() {
   const triggerDeleteConfirm = (id: string) => {
     setDeleteId(id);
     setIsConfirmDeleteOpen(true);
+  };
+
+  const handleToggleStar = async (id: string) => {
+    const question = questions.find((q) => q.id === id);
+    if (question) {
+      const updatedQuestion = { ...question, isStarred: !question.isStarred };
+      await StorageManager.save(updatedQuestion);
+      const updated = await StorageManager.getAll();
+      setQuestions(updated);
+    }
   };
 
   const executeDelete = async () => {
@@ -468,6 +474,7 @@ export default function App() {
           onNewUploadTrigger={() => fileInputRef.current?.click()}
           onToggleCollocationsReview={() => setIsCollocationsReviewActive(true)}
           onDeleteQuestion={(id) => triggerDeleteConfirm(id)}
+          onToggleStar={handleToggleStar}
         />
       )}
 
@@ -767,8 +774,6 @@ export default function App() {
           {!isCollocationsReviewActive && currentQuestion && !isAnalyzing && (
             <AnalysisWorkspace
               question={currentQuestion}
-              isFullScreenAnalysis={isFullScreenAnalysis}
-              onToggleFullScreen={() => setIsFullScreenAnalysis(!isFullScreenAnalysis)}
               onOpenNoteModal={() => setIsNoteModalOpen(true)}
               onDeleteQuestion={(id) => triggerDeleteConfirm(id)}
             />

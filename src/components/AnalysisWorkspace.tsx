@@ -25,22 +25,15 @@ import {
 
 interface AnalysisWorkspaceProps {
   question: SavedQuestion;
-  isFullScreenAnalysis: boolean;
-  onToggleFullScreen: () => void;
   onOpenNoteModal: () => void;
   onDeleteQuestion: (id: string) => void;
 }
 
 export default function AnalysisWorkspace({
   question,
-  isFullScreenAnalysis,
-  onToggleFullScreen,
   onOpenNoteModal,
   onDeleteQuestion,
 }: AnalysisWorkspaceProps) {
-  const [isImgCollapsed, setIsImgCollapsed] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
   const [globalTtsPlaying, setGlobalTtsPlaying] = useState(false);
 
@@ -254,185 +247,99 @@ export default function AnalysisWorkspace({
   };
 
   return (
-    <div className="space-y-6 text-left" id="workspaceContainer">
-      {/* Zoom Modal */}
-      {zoomedImage && (
-        <div
-          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4"
-          onClick={() => setZoomedImage(null)}
+    <div className="space-y-6 text-left relative" id="workspaceContainer">
+      {/* Floating Action Buttons for quick navigation */}
+      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-40">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="w-12 h-12 rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-700 flex items-center justify-center transition-transform hover:-translate-y-1 cursor-pointer border-none"
+          title="Back to Top"
         >
-          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-all cursor-pointer">
-            ✕
-          </button>
-          <img
-            src={zoomedImage}
-            alt="Zoomed Screenshot"
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-          />
-        </div>
-      )}
+          <ChevronUp className="w-5 h-5" />
+        </button>
+      </div>
 
-      {/* Grid of Question Image + Analysis Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 transition-all duration-500">
-        
-        {/* original image display panel */}
-        {!isFullScreenAnalysis && (
-          <div className="lg:col-span-4 flex flex-col transition-all duration-300 overflow-hidden">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 flex-1">
-              <div
-                className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3 cursor-pointer group"
-                onClick={() => setIsImgCollapsed(!isImgCollapsed)}
-              >
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase flex items-center gap-1.5 transition-colors group-hover:text-blue-600">
-                  <ImageIcon className="w-4 h-4 text-slate-400 transition-colors group-hover:text-blue-505" />
-                  <span>Question Image</span>
-                </h4>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-blue-105 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold text-[10px] font-en uppercase">
-                    {question.category}
-                  </span>
-                  {isImgCollapsed ? (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                  ) : (
-                    <ChevronUp className="w-4 h-4 text-slate-400" />
-                  )}
-                </div>
-              </div>
+      {/* Right side study panel now takes full width */}
+      <div className="space-y-6 transition-all duration-300">
+        {/* Compact header actions */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="flex flex-wrap items-center gap-2 relative z-10 w-full sm:w-auto">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse hidden sm:inline-block"></span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-bold hidden sm:inline-block">
+              Analyzed: {question.date}
+            </span>
 
-              {!isImgCollapsed && (
-                <div className="space-y-4 pt-1 transition-all duration-300">
-                  <div className="relative rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950 p-2 overflow-hidden flex items-center justify-center group min-h-[200px]">
-                    <img
-                      src={imagesList[activeImageIndex] || "https://placehold.co/400x300/e2e8f0/1e293b?text=PTE+Screenshot"}
-                      alt="PTE Question Screenshot"
-                      className="max-w-full max-h-[280px] object-contain rounded-lg shadow-xs"
-                    />
-                    <button
-                      onClick={() => setZoomedImage(imagesList[activeImageIndex] || "https://placehold.co/400x300/e2e8f0/1e293b?text=PTE+Screenshot")}
-                      className="absolute right-4 bottom-4 p-2 bg-slate-900/85 hover:bg-slate-950 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all text-xs flex items-center gap-1.5 shadow-lg relative z-10 cursor-pointer border-none"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                      <span>Zoom In</span>
-                    </button>
-                  </div>
-
-                  {imagesList.length > 1 && (
-                    <div className="flex flex-wrap gap-2 justify-center py-1 relative z-10">
-                      {imagesList.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveImageIndex(idx)}
-                          className={`w-10 h-10 rounded border-2 overflow-hidden transition-all duration-200 cursor-pointer ${
-                            idx === activeImageIndex
-                              ? "border-blue-600 bg-blue-500/20"
-                              : "border-slate-200 dark:border-slate-800 opacity-60"
-                          }`}
-                        >
-                          <img src={img} className="w-full h-full object-cover" alt="" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 relative z-10">
-                    <button
-                      onClick={() => onDeleteQuestion(question.id)}
-                      className="flex-1 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-450 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer border-none"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete Study</span>
-                    </button>
-                    <button
-                      onClick={handleGlobalTts}
-                      className="flex-1 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/15 hover:bg-teal-100 dark:hover:bg-teal-950/30 text-teal-650 dark:text-teal-400 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer border-none"
-                    >
-                      {ttsLoadingId === "global" ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Volume2 className="w-4 h-4" />
-                      )}
-                      <span>Listen Guide</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Right side study panel */}
-        <div
-          className={`${
-            isFullScreenAnalysis ? "lg:col-span-12" : "lg:col-span-8"
-          } space-y-6 transition-all duration-300`}
-        >
-          {/* Compact header actions */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <div className="flex flex-wrap items-center gap-2 relative z-10">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">
-                Analyzed: {question.date}
+            <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+            
+            <button
+              onClick={onOpenNoteModal}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-705 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all text-[11px] font-bold border border-amber-200 dark:border-amber-800/30 shadow-xs cursor-pointer"
+              title="Review Status"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>
+                {question.status === "needs-review" && "🟠 Needs Review"}
+                {question.status === "mastered" && "🟢 Mastered"}
+                {question.status === "critical" && "🔴 Critical"}
               </span>
-
-              <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1 hidden sm:block"></div>
-              <button
-                onClick={onOpenNoteModal}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-705 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all text-[11px] font-bold border border-amber-200 dark:border-amber-800/30 shadow-xs cursor-pointer"
-                title="Review Status"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>
-                  {question.status === "needs-review" && "🟠 Needs Review"}
-                  {question.status === "mastered" && "🟢 Mastered"}
-                  {question.status === "critical" && "🔴 Critical"}
-                </span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 relative z-10">
-              <button
-                onClick={onToggleFullScreen}
-                className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-101 dark:hover:bg-blue-900/40 transition-all flex items-center gap-1.5 shadow-xs tooltip cursor-pointer"
-                title="Focus Mode Toggle"
-              >
-                {isFullScreenAnalysis ? (
-                  <>
-                    <Minimize className="w-3.5 h-3.5" />
-                    <span>Show Image</span>
-                  </>
-                ) : (
-                  <>
-                    <Maximize className="w-3.5 h-3.5" />
-                    <span>Focus Mode</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleExportVocabulary}
-                className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-101 dark:hover:bg-indigo-900/50 transition-all flex items-center gap-1.5 shadow-xs tooltip cursor-pointer"
-                title="Export key vocabulary items"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export Vocab</span>
-              </button>
-
-              <button
-                onClick={handleCopyReport}
-                className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-705 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-xs cursor-pointer"
-                title="Copy structured response object"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
+            </button>
+            
+            {/* Nav anchors */}
+            <div className="flex gap-1 ml-2 flex-wrap">
+              <button onClick={() => document.getElementById('step2')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Vocab</button>
+              <button onClick={() => document.getElementById('step-translation')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Translate</button>
+              <button onClick={() => document.getElementById('step3')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Parsing</button>
+              <button onClick={() => document.getElementById('step4')?.scrollIntoView({ behavior: 'smooth' })} className="px-2 py-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none">Breakdown</button>
             </div>
           </div>
 
-          {/* Full Parsed Steps Panels */}
+          <div className="flex items-center gap-2 relative z-10 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+            <button
+              onClick={handleGlobalTts}
+              className="px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/15 hover:bg-teal-100 dark:hover:bg-teal-950/30 text-teal-650 dark:text-teal-400 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer border-none"
+            >
+              {ttsLoadingId === "global" ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
+              <span className="hidden md:inline">Listen Guide</span>
+            </button>
+            
+            <button
+              onClick={() => onDeleteQuestion(question.id)}
+              className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-450 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer border-none"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Delete</span>
+            </button>
+
+            <button
+              onClick={handleExportVocabulary}
+              className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:bg-indigo-101 dark:hover:bg-indigo-900/50 transition-all flex items-center gap-1.5 shadow-xs tooltip cursor-pointer"
+              title="Export key vocabulary items"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Export Vocab</span>
+            </button>
+
+            <button
+              onClick={handleCopyReport}
+              className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-705 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-all shadow-xs cursor-pointer"
+              title="Copy structured response object"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Full Parsed Steps Panels */}
+
           {payload ? (
             <div className="space-y-6">
               
               {/* Step 1: Question Type */}
-              <div className="bg-gradient-to-tr from-blue-50/50 via-white to-blue-50/10 dark:from-blue-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-blue-200 dark:border-blue-900/30 border-l-4 border-l-blue-500 overflow-hidden shadow-md animate-slide-up">
+              <div id="step1" className="bg-gradient-to-tr from-blue-50/50 via-white to-blue-50/10 dark:from-blue-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-blue-200 dark:border-blue-900/30 border-l-4 border-l-blue-500 overflow-hidden shadow-md animate-slide-up">
                 <div className="p-4 bg-blue-50/30 dark:bg-blue-950/20 border-b border-blue-105/30 dark:border-blue-900/10 flex items-center gap-2">
                   <span className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-xs font-bold font-en">
                     1
@@ -447,7 +354,7 @@ export default function AnalysisWorkspace({
               </div>
 
               {/* Step 2: Collocations */}
-              <div className="bg-gradient-to-tr from-amber-50/50 via-white to-amber-50/11 dark:from-amber-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-amber-200 dark:border-amber-900/40 border-l-4 border-l-amber-500 overflow-hidden shadow-md animate-slide-up">
+              <div id="step2" className="bg-gradient-to-tr from-amber-50/50 via-white to-amber-50/11 dark:from-amber-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-amber-200 dark:border-amber-900/40 border-l-4 border-l-amber-500 overflow-hidden shadow-md animate-slide-up">
                 <div className="p-4 bg-amber-50/30 dark:bg-amber-950/20 border-b border-amber-105/30 dark:border-amber-900/10 flex items-center gap-2">
                   <span className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xs font-bold font-en">
                     2
@@ -515,7 +422,7 @@ export default function AnalysisWorkspace({
 
               {/* Full Integrated Translation card */}
               {payload.fullPassageTranslation && (
-                <div className="bg-gradient-to-tr from-purple-50/50 via-white to-purple-50/11 dark:from-purple-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-purple-200 dark:border-purple-900/40 border-l-4 border-l-purple-500 overflow-hidden shadow-md animate-slide-up overflow-x-hidden">
+                <div id="step-translation" className="bg-gradient-to-tr from-purple-50/50 via-white to-purple-50/11 dark:from-purple-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-purple-200 dark:border-purple-900/40 border-l-4 border-l-purple-500 overflow-hidden shadow-md animate-slide-up overflow-x-hidden">
                   <div className="p-4 bg-purple-50/30 dark:bg-purple-950/20 border-b border-purple-101/30 dark:border-purple-900/10 flex items-center gap-2">
                     <span className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 flex items-center justify-center text-xs font-bold">
                       <Languages className="w-4 h-4 text-purple-500" />
@@ -563,7 +470,7 @@ export default function AnalysisWorkspace({
               )}
 
               {/* Step 3: Sentence Parsing */}
-              <div className="bg-gradient-to-tr from-indigo-50/50 via-white to-indigo-50/11 dark:from-indigo-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-indigo-200 dark:border-indigo-900/40 border-l-4 border-l-indigo-500 overflow-hidden shadow-md animate-slide-up">
+              <div id="step3" className="bg-gradient-to-tr from-indigo-50/50 via-white to-indigo-50/11 dark:from-indigo-950/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-indigo-200 dark:border-indigo-900/40 border-l-4 border-l-indigo-500 overflow-hidden shadow-md animate-slide-up">
                 <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/20 border-b border-indigo-101/30 dark:border-indigo-900/10 flex items-center gap-2">
                   <span className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold font-en">
                     3
@@ -642,7 +549,7 @@ export default function AnalysisWorkspace({
 
               {/* Step 4: Options Breakdown (If FIB/FIB-RW) or Alternative Pairing Sandbox (If RO) */}
               {question.category === "RO" ? (
-                <div className="bg-gradient-to-tr from-indigo-50/70 via-white to-purple-50/30 dark:from-[#1e1b4b]/20 dark:via-[#0c1224] dark:to-[#311042]/10 rounded-2xl border border-indigo-200 dark:border-indigo-900/40 border-l-4 border-l-indigo-500 overflow-hidden shadow-md animate-slide-up">
+                <div id="step4" className="bg-gradient-to-tr from-indigo-50/70 via-white to-purple-50/30 dark:from-[#1e1b4b]/20 dark:via-[#0c1224] dark:to-[#311042]/10 rounded-2xl border border-indigo-200 dark:border-indigo-900/40 border-l-4 border-l-indigo-500 overflow-hidden shadow-md animate-slide-up">
                   <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/20 border-b border-indigo-101/30 dark:border-indigo-900/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold font-en">
@@ -896,7 +803,7 @@ export default function AnalysisWorkspace({
                   </div>
                 </div>
               ) : (
-                <div className="bg-gradient-to-tr from-rose-50/50 via-white to-rose-50/11 dark:from-rose-955/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-rose-200 dark:border-rose-900/40 border-l-4 border-l-rose-500 overflow-hidden shadow-md animate-slide-up">
+                <div id="step4" className="bg-gradient-to-tr from-rose-50/50 via-white to-rose-50/11 dark:from-rose-955/20 dark:via-[#0c1224] dark:to-slate-950/5 rounded-2xl border border-rose-200 dark:border-rose-900/40 border-l-4 border-l-rose-500 overflow-hidden shadow-md animate-slide-up">
                   <div className="p-4 bg-rose-50/30 dark:bg-rose-950/20 border-b border-rose-101/30 dark:border-rose-900/10 flex items-center gap-2">
                     <span className="w-7 h-7 rounded-lg bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 flex items-center justify-center text-xs font-bold font-en">
                       4
@@ -1060,7 +967,6 @@ export default function AnalysisWorkspace({
             </p>
           </div>
         </div>
-      </div>
     </div>
   );
 }
