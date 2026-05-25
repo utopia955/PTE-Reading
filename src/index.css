@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Vazirmatn:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Vazirmatn", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  @apply antialiased transition-colors duration-200 bg-slate-50 dark:bg-[#070b16] text-slate-800 dark:text-slate-100 font-sans;
+}
+
+/* Luxury visual accents and scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Direction auto leading booster for Arabic/Persian scripts */
+[dir="rtl"], [dir="auto"] {
+  line-height: 1.85 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Ultra premium glow card */
+.glass-glow-blue {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  @apply border border-slate-200/80 shadow-xs;
+}
+.dark .glass-glow-blue {
+  background: rgba(13, 20, 39, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.glass-glow-sidebar {
+  background: #ffffff;
+}
+.dark .glass-glow-sidebar {
+  background: #0b1121;
+}
+
+.glass-glow-card {
+  background: #ffffff;
+  @apply border border-slate-200/80 shadow-xs rounded-3xl transition-all duration-300;
+}
+.dark .glass-glow-card {
+  background: #0d1427;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  @apply shadow-2xl shadow-black/40 rounded-3xl transition-all duration-300;
+}
+
+.glass-glow-card:hover {
+  @apply border-indigo-300 dark:border-indigo-900/60 shadow-md;
+}
+
+

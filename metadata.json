@@ -1,0 +1,6 @@
+{
+  "name": "PTE Core Reading Coach",
+  "description": "An advanced PTE Core Reading study partner that analyzes screenshots of questions, explains grammar, extracts vocabulary collocations, parses sentences, and provides detailed guides.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
