@@ -21,7 +21,6 @@ import {
   Upload,
   Settings,
   X,
-  Plus,
   Trash2,
   Check,
   AlertTriangle,
@@ -951,17 +950,6 @@ export default function App() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Floating Action Button */}
-      {!stagedImages.length && !isAnalyzing && (
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 w-14 h-14 rounded-full bg-gradient-to-r from-blue-650 to-indigo-650 text-white shadow-[0_10px_25px_rgba(37,99,235,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group border border-white/10 cursor-pointer"
-          title="Upload New Screenshot"
-        >
-          <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-        </button>
       )}
 
       {/* Render Note / Status Editor modal inline */}

@@ -216,18 +216,20 @@ export default function AnalysisWorkspace({
         const isLatin = subIdx % 2 === 1;
         
         if (isLatin) {
+          // Remove leading/trailing quotes if they accidentally got swept in, or keep them but don't box them.
+          // Better: just render as inline text with distinct color and font, without borders and backgrounds.
           return (
-            <span
+            <bdi
               key={`bold-${index}-sub-${subIdx}`}
               dir="ltr"
-              className={`inline-block font-mono text-[13px] px-1 py-0.5 rounded tracking-wide border align-middle select-all mx-0.5 ${
+              className={`inline-block font-sans px-0.5 mx-0.5 ${
                 isBold
-                  ? "bg-blue-50/90 dark:bg-blue-95/35 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-900/40 font-extrabold"
-                  : "bg-slate-100/90 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200/40 dark:border-slate-705/40 font-semibold"
+                  ? "text-blue-700 dark:text-blue-400 font-extrabold"
+                  : "text-slate-800 dark:text-slate-200 font-bold"
               }`}
             >
               {subPart}
-            </span>
+            </bdi>
           );
         } else {
           // It's Persian / non-Latin text. Use Inter font ("font-sans") for modern polished display
