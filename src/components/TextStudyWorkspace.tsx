@@ -240,6 +240,14 @@ export default function TextStudyWorkspace({
 
       const result = await res.json();
       setAnalysisResult(result);
+      // Auto-save the lexical analysis results to the history database and collocations hub on success
+      onSaveQuestion({
+        title: result.passageTitle || "Pasted Passage Study",
+        text: result.fullPassageTranslation || inputText,
+        collocations: result.step2_collocations || [],
+        hardWords: result.step2_hardWords || [],
+      });
+      setIsSaved(true);
     } catch (err: any) {
       console.error(err);
       setAnalysisError(err?.message || "An exception occurred while contacting the Gemini analyzer.");
