@@ -2,6 +2,8 @@
 // Both providers return an identical JSON object shape (see prompt.ts).
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
+import WebSocket from "ws";
+import crypto from "crypto";
 import { getModel, type ProviderId } from "./models.js";
 import {
   SYSTEM_PROMPT,
@@ -496,7 +498,163 @@ export async function runWordsAnalysis(args: AnalyzeWordsArgs): Promise<any> {
   }
 }
 
+function uuidv32(): string {
+  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function generateSecMsGecVersion(): string {
+  const WINDOWS_EPOCH_OFFSET = 11644473600n; // Seconds difference 1601 to 1970
+  const nowUnixSeconds = BigInt(Math.floor(Date.now() / 1000));
+  const nowWindowsTicks = (nowUnixSeconds + WINDOWS_EPOCH_OFFSET) * 10000000n;
+  const roundedTicks = nowWindowsTicks - (nowWindowsTicks % 3000000000n);
+  
+  const token = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
+  const data = roundedTicks.toString() + token;
+  return crypto.createHash("sha256").update(data).digest("hex").toUpperCase();
+}
+
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
+function mapVoiceToEdge(voice?: string): string {
+  if (!voice) return "en-US-AriaNeural";
+  const v = voice.toLowerCase();
+  if (v.includes("guy") || v.includes("puck") || v.includes("male")) {
+    return "en-US-GuyNeural";
+  }
+  if (v.includes("sonia") || v.includes("gb_female")) {
+    return "en-GB-SoniaNeural";
+  }
+  if (v.includes("ryan") || v.includes("gb_male")) {
+    return "en-GB-RyanNeural";
+  }
+  if (v.includes("natasha") || v.includes("au_female")) {
+    return "en-AU-NatashaNeural";
+  }
+  if (v.includes("william") || v.includes("au_male")) {
+    return "en-AU-WilliamNeural";
+  }
+  if (voice.includes("-") && voice.endsWith("Neural")) {
+    return voice;
+  }
+  return "en-US-AriaNeural";
+}
+
+async function synthesizeEdgeTts(text: string, voiceName: string = "en-US-AriaNeural"): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const reqId = uuidv32();
+    const url = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4`;
+    const gec = generateSecMsGecVersion();
+    
+    const ws = new WebSocket(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+        'Origin': 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
+        'Sec-MS-GEC': gec,
+        'Sec-MS-GEC-Version': gec
+      }
+    });
+
+    const audioChunks: Buffer[] = [];
+    let isTerminated = false;
+
+    const timeout = setTimeout(() => {
+      if (!isTerminated) {
+        isTerminated = true;
+        ws.terminate();
+        reject(new Error("Timeout during Edge speech synthesis"));
+      }
+    }, 15000);
+
+    ws.on('open', () => {
+      const date = new Date().toString();
+      const configMsg = `X-Timestamp:${date}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"system":{"name":"SpeechSDK","version":"1.12.1-rc.1","build":"JavaScript","lang":"en-US"},"os":{"platform":"Browser","name":"Chrome","version":"120.0.0.0"}}}`;
+      ws.send(configMsg);
+
+      const contextMsg = `X-Timestamp:${date}\r\nContent-Type:application/json; charset=utf-8\r\nPath:synthesis.context\r\n\r\n{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}`;
+      ws.send(contextMsg);
+
+      const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voiceName}'><rate speed='+0%' pitch='+0%'>${escapeXml(text)}</rate></voice></speak>`;
+      const ssmlMsg = `X-RequestId:${reqId}\r\nContent-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n${ssml}`;
+      ws.send(ssmlMsg);
+    });
+
+    ws.on('message', (data, isBinary) => {
+      if (isBinary) {
+        try {
+          const buffer = data as Buffer;
+          if (buffer.length < 2) return;
+          const headerLength = buffer.readUInt16BE(0);
+          if (buffer.length < 2 + headerLength) return;
+          const headersStr = buffer.toString('utf8', 2, 2 + headerLength);
+          const audioChunk = buffer.subarray(2 + headerLength);
+          if (headersStr.includes('Path:audio')) {
+            audioChunks.push(audioChunk);
+          }
+        } catch (err) {
+          console.error("Error parsing binary socket message of Edge TTS:", err);
+        }
+      } else {
+        const textMsg = data.toString();
+        if (textMsg.includes('Path:turn.end')) {
+          if (!isTerminated) {
+            isTerminated = true;
+            clearTimeout(timeout);
+            ws.close();
+            resolve(Buffer.concat(audioChunks));
+          }
+        }
+      }
+    });
+
+    ws.on('error', (err) => {
+      console.error("Edge TTS WS error:", err);
+      if (!isTerminated) {
+        isTerminated = true;
+        clearTimeout(timeout);
+        reject(err);
+      }
+    });
+
+    ws.on('close', () => {
+      if (!isTerminated) {
+        isTerminated = true;
+        clearTimeout(timeout);
+        if (audioChunks.length > 0) {
+          resolve(Buffer.concat(audioChunks));
+        } else {
+          reject(new Error("Edge TTS WS connection closed prematurely with no audio"));
+        }
+      }
+    });
+  });
+}
+
 export async function runTts(args: TtsArgs): Promise<string> {
+  // 1. Try free Microsoft Edge Online Neural TTS first (highly realistic, premium natural quality, 0 key required)
+  try {
+    const mappedVoice = mapVoiceToEdge(args.voice);
+    const audioBuffer = await synthesizeEdgeTts(args.text, mappedVoice);
+    return audioBuffer.toString("base64");
+  } catch (err) {
+    console.warn("Microsoft Edge free TTS failed, falling back to Google GenAI TTS...", err);
+  }
+
+  // 2. Fall back to original Gemini TTS config on error
   const apiKey = resolveApiKey("google", args.apiKey);
   if (!apiKey) {
     // No Google key available — signal the client to use its Web Speech fallback.

@@ -71,7 +71,9 @@ export async function speak(text: string, onEnd?: () => void): Promise<void> {
     const data = await res.json();
     if (!data?.audio) throw new Error("no audio");
 
-    const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+    const isWav = data.audio.startsWith("UklGR");
+    const mime = isWav ? "audio/wav" : "audio/mpeg";
+    const audio = new Audio(`data:${mime};base64,${data.audio}`);
     currentAudio = audio;
 
     let settled = false;

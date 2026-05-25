@@ -272,6 +272,24 @@ export default function AnalysisWorkspace({
 
       {/* Right side study panel now takes full width */}
       <div className="space-y-6 transition-all duration-300">
+        
+        {/* Main Title Banner Section */}
+        <div className="p-6 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-slide-up">
+          <div className="space-y-1">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#6366f1] dark:text-[#a5b4fc]">
+              {isTextStudy ? "📝 On-Demand Lexical Clipboard Study" : "🎯 PTE Academic Coaching Analysis"}
+            </span>
+            <h2 className="text-lg font-black text-slate-850 dark:text-white leading-tight">
+              {question.title || "Untitled Study Passage"}
+            </h2>
+          </div>
+          {isTextStudy && (
+            <div className="px-3.5 py-1.5 rounded-xl bg-[#6366f1]/10 border border-[#6366f1]/20 text-[#6366f1] dark:text-[#a5b4fc] text-xs font-bold leading-none w-fit">
+              📖 Offline Lexical Hub Item
+            </div>
+          )}
+        </div>
+
         {/* Compact header actions */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
           <div className="flex flex-wrap items-center gap-2 relative z-10 w-full sm:w-auto">

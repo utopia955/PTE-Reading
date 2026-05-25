@@ -93,6 +93,7 @@ export default function App() {
   // Vocabulary & Collocations bank toggle
   const [isCollocationsReviewActive, setIsCollocationsReviewActive] = useState<boolean>(false);
   const [isTextStudyActive, setIsTextStudyActive] = useState<boolean>(false);
+  const [textStudyInitialText, setTextStudyInitialText] = useState<string>("");
 
   // Toasts
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "info" | "warning" | "error" }[]>([]);
@@ -354,6 +355,60 @@ export default function App() {
     }
   };
 
+  const startOcrExtraction = async () => {
+    if (stagedImages.length === 0) {
+      showToast("Please attach or paste an image screenshot first.", "warning");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalyzeStep(2);
+    setAnalyzeStatusText("Extracting passage text via OCR...");
+    setAnalyzeSubStatusText("AI OCR engine is reading and transcribing content verbatim...");
+
+    try {
+      const extractedTexts: string[] = [];
+      for (let i = 0; i < stagedImages.length; i++) {
+        const img = stagedImages[i];
+        const res = await fetch("/api/detect-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: img,
+            model: apiModel,
+            provider,
+            apiKey: provider === "openrouter" ? openrouterKey : googleKey,
+          }),
+        });
+
+        if (!res.ok) {
+          const errObj = await res.json().catch(() => ({}));
+          throw new Error(errObj?.error || `OCR failed on staged image ${i + 1} with status ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.text) {
+          extractedTexts.push(data.text);
+        }
+      }
+
+      if (extractedTexts.length === 0) {
+        throw new Error("No readable transcript found in your screenshot.");
+      }
+
+      const mergedText = extractedTexts.join("\n\n");
+      setTextStudyInitialText(mergedText);
+      setIsTextStudyActive(true);
+      setStagedImages([]);
+      showToast("Text extracted! Loaded directly into Vocabulary Highlight Studio.", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err?.message || "Could not complete OCR text extraction.", "error");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const refreshQuestions = async () => {
     const all = await StorageManager.getAll();
     setQuestions(all);
@@ -596,9 +651,56 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-150 dark:border-slate-800">
-                <div className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed font-semibold">
-                  💡 Paste screenshots directly with <b>Ctrl+V</b> anywhere on the screen to stage them side-by-side.
+              <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
+                <h5 className="text-[11px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider text-left mb-4">
+                  Select Your Learning Approach for the Staged Screenshot(s):
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Approach A: Digest Full PTE Practice Problem */}
+                  <button
+                    onClick={startAnalysis}
+                    className="group bg-slate-50 hover:bg-blue-50/50 dark:bg-slate-900/40 dark:hover:bg-blue-950/20 border border-slate-200 hover:border-blue-500/40 dark:border-slate-800 dark:hover:border-blue-500/30 rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform border border-blue-500/20">
+                        <Compass className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <h6 className="text-xs font-black text-slate-850 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-350 transition-colors">
+                          Digest Full PTE Exam Problem
+                        </h6>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed font-semibold">
+                          Deconstruct fill-in-the-gaps, sequences, or multiple choice screens. Auto-builds standard Pearson structured drills, interactive sandboxes, grammar grids & options elimination matrices.
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Approach B: Extract Text & Study Vocabulary */}
+                  <button
+                    onClick={startOcrExtraction}
+                    className="group bg-slate-50 hover:bg-indigo-50/50 dark:bg-slate-900/40 dark:hover:bg-indigo-950/20 border border-slate-200 hover:border-indigo-500/40 dark:border-slate-800 dark:hover:border-indigo-500/30 rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform border border-indigo-500/20">
+                        <BookMarked className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h6 className="text-xs font-black text-slate-850 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-350 transition-colors">
+                          Extract Text & Highlight Vocabulary
+                        </h6>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed font-semibold">
+                          Run rapid OCR text transcription. Highlight custom key words and idiomatic structures, generate collocations automatically, and practice with fluid pronunciation speakers.
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div className="text-xs text-slate-400 dark:text-slate-450 leading-relaxed font-semibold">
+                  💡 Staged screenshots can be grouped and analyzed together.
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -614,14 +716,7 @@ export default function App() {
                     onClick={() => fileInputRef.current?.click()}
                     className="px-4 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-[#1E293B] dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-750 dark:text-white rounded-xl transition-all cursor-pointer"
                   >
-                    + Add Question
-                  </button>
-                  <button
-                    onClick={startAnalysis}
-                    className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer border-none animate-pulse hover:animate-none"
-                  >
-                    <Compass className="w-4 h-4" />
-                    <span>Begin Parsing</span>
+                    + Add Image
                   </button>
                 </div>
               </div>
@@ -692,6 +787,7 @@ export default function App() {
           {isTextStudyActive && !isAnalyzing && (
             <div className="max-w-5xl mx-auto w-full relative z-10 transition-all">
               <TextStudyWorkspace
+                initialText={textStudyInitialText}
                 onSaveQuestion={async (data) => {
                   try {
                     const questionId = Math.random().toString(36).substring(2, 11);
@@ -731,11 +827,15 @@ export default function App() {
                     // Set active
                     setSelectedQuestionId(questionId);
                     setIsTextStudyActive(false);
+                    setTextStudyInitialText("");
                   } catch (err) {
                     showToast("Could not save study session.", "error");
                   }
                 }}
-                onClose={() => setIsTextStudyActive(false)}
+                onClose={() => {
+                  setIsTextStudyActive(false);
+                  setTextStudyInitialText("");
+                }}
                 provider={provider}
                 apiModel={apiModel}
                 googleKey={googleKey}
@@ -748,28 +848,33 @@ export default function App() {
           {!isCollocationsReviewActive && !isTextStudyActive && !currentQuestion && !isAnalyzing && (
             <div className="max-w-4xl mx-auto w-full mt-4 space-y-6">
               
-              {/* Premium Hero Bento Card */}
-              <div className="bg-white dark:bg-[#1E293B] rounded-[32px] border border-slate-200 dark:border-slate-800 p-8 md:p-12 text-center relative overflow-hidden shadow-xl">
-                <div className="absolute -top-32 -right-32 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
-                <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+              {/* Premium Hero Bento Clipboard-First Card */}
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-white dark:bg-[#1E293B] rounded-[32px] border-2 border-dashed border-slate-200 hover:border-blue-500/80 dark:border-slate-800 dark:hover:border-blue-500/80 p-8 md:p-12 text-center relative overflow-hidden shadow-xl transition-all group cursor-pointer"
+              >
+                <div className="absolute -top-32 -right-32 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+                <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
 
-                <div className="relative z-10 space-y-4">
-                  <div className="w-16 h-16 bg-gradient-to-tr from-blue-650 to-indigo-650 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-600/30">
-                    <GraduationCap className="w-8 h-8" />
+                <div className="relative z-10 space-y-5">
+                  <div className="w-16 h-16 bg-gradient-to-tr from-blue-50 to-indigo-50 dark:from-[#111827] dark:to-[#111827] border border-blue-100 dark:border-slate-800 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 group-hover:border-blue-500/30 transition-all shadow-sm">
+                    <Sparkles className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-2xl font-black text-slate-800 dark:text-white pb-1">PTE Core Elite Reading Coach</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-405 max-w-lg mx-auto leading-relaxed font-semibold">
-                    Paste screenshots of reading passages, fill-in-the-blanks, or reorder questions directly (<b>Ctrl+V</b>), or click below to launch an instant coaching report.
-                  </p>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-black text-slate-850 dark:text-white">PTE Core Elite Reading Coach</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed font-semibold">
+                      Copy an exam question screenshot or custom passage to your clipboard, and simply press <b className="px-2 py-0.5 font-bold rounded-lg bg-blue-100 dark:bg-slate-900 text-blue-700 dark:text-blue-300">Ctrl + V</b> or <b className="px-2 py-0.5 font-bold rounded-lg bg-blue-100 dark:bg-slate-900 text-blue-700 dark:text-blue-300">Cmd + V</b> anywhere to paste.
+                    </p>
+                  </div>
 
-                  <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-xs hover:shadow-lg hover:shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span>Select Screenshot</span>
-                    </button>
+                  <div className="pt-2 flex flex-col items-center justify-center gap-2 max-w-xs mx-auto">
+                    <div className="px-4 py-2 bg-blue-500/10 text-blue-650 dark:text-blue-450 border border-blue-500/25 rounded-xl text-[11px] font-black uppercase tracking-wider animate-pulse group-hover:animate-none">
+                      ⚡ Clipboard Paste Active
+                    </div>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold hover:underline mt-2">
+                      or click anywhere inside this box to upload files
+                    </span>
                   </div>
                 </div>
               </div>

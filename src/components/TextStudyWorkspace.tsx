@@ -28,6 +28,7 @@ interface TextStudyWorkspaceProps {
   apiModel: string;
   googleKey: string;
   openrouterKey: string;
+  initialText?: string;
 }
 
 export default function TextStudyWorkspace({
@@ -37,9 +38,10 @@ export default function TextStudyWorkspace({
   apiModel,
   googleKey,
   openrouterKey,
+  initialText = "",
 }: TextStudyWorkspaceProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState(initialText);
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [customPhrase, setCustomPhrase] = useState("");
   
@@ -251,7 +253,7 @@ export default function TextStudyWorkspace({
     
     onSaveQuestion({
       title: analysisResult.passageTitle || "Pasted Passage Study",
-      text: inputText,
+      text: analysisResult.fullPassageTranslation || inputText,
       collocations: analysisResult.step2_collocations || [],
       hardWords: analysisResult.step2_hardWords || [],
     });
@@ -401,7 +403,26 @@ export default function TextStudyWorkspace({
       {step === 2 && (
         <div className="space-y-6 relative z-10">
           <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-150 dark:border-slate-850">
-            <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">Passage Viewer</h4>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">Passage Viewer</h4>
+              <button
+                onClick={() => triggerTts(inputText, "original-passage-step2")}
+                className="px-3 py-1 bg-blue-100 hover:bg-blue-250 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-lg flex items-center gap-1.5 cursor-pointer border-none transition-all text-[11px] font-bold"
+                title="Click to hear the full main passage"
+              >
+                {ttsLoadingId === "original-passage-step2" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Stop Listening</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+                    <span>Listen To Main Passage</span>
+                  </>
+                )}
+              </button>
+            </div>
             <p className="text-[11px] text-slate-450 dark:text-slate-500 font-semibold mb-3">
               💡 <b>Click</b> on any individual word to instantly select it, or <b>highlight</b> multiple words (collocation phrase) and click target button below!
             </p>
@@ -564,29 +585,69 @@ export default function TextStudyWorkspace({
               
               {/* Passage Full translation block */}
               <div className="bg-slate-50 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200 dark:border-slate-800/80">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <h4 className="text-xs font-extrabold uppercase tracking-widest text-[#6366f1] dark:text-[#a5b4fc]">
                     Passage Translation & Bilingual Reading
                   </h4>
-                  <span className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold px-2 py-0.5 rounded-lg">
-                    Title: {analysisResult.passageTitle}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => triggerTts(inputText, "original-passage-step3")}
+                      className="px-2.5 py-1 text-[11px] font-black bg-indigo-100 hover:bg-indigo-200 dark:bg-[#6366f1]/15 dark:hover:bg-[#6366f1]/35 text-indigo-700 dark:text-[#a5b4fc] border border-indigo-200/50 dark:border-[#6366f1]/20 rounded-lg flex items-center gap-1 cursor-pointer transition-all"
+                      title="Read full original passage via TTS"
+                    >
+                      {ttsLoadingId === "original-passage-step3" ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Stop full speech</span>
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3 h-3" />
+                          <span>Listen Full Passage</span>
+                        </>
+                      )}
+                    </button>
+                    <span className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold px-2 py-0.5 rounded-lg">
+                      Title: {analysisResult.passageTitle}
+                    </span>
+                  </div>
                 </div>
                 
-                <div className="text-xs leading-relaxed text-slate-800 dark:text-slate-150 space-y-3 font-sans max-h-[180px] overflow-y-auto pr-1">
+                <div className="text-xs leading-relaxed text-slate-800 dark:text-slate-150 space-y-3 font-sans max-h-[300px] overflow-y-auto pr-1">
                   {analysisResult.fullPassageTranslation.split("\n\n").map((para: string, idx: number) => {
                     const isPersian = /[\u0600-\u06FF]/.test(para);
-                    return (
-                      <p 
-                        key={idx} 
-                        className={`text-slate-800 dark:text-slate-200 font-sans leading-relaxed break-words whitespace-pre-wrap ${
-                          isPersian ? "text-right font-fa font-bold opacity-90 text-sm border-r-2 border-indigo-500/40 pr-3.5" : "text-left"
-                        }`}
-                        dir={isPersian ? "rtl" : "ltr"}
-                      >
-                        {para}
-                      </p>
-                    );
+                    if (!isPersian) {
+                      return (
+                        <div key={idx} className="relative group p-3 rounded-xl bg-indigo-50/10 dark:bg-slate-950/40 border border-indigo-100/30 dark:border-slate-800/60 flex items-start gap-4 hover:border-indigo-500/30 transition-all select-text mt-1">
+                          <div className="flex-1 pr-8 text-left">
+                            <p className="text-slate-800 dark:text-slate-200 font-sans leading-relaxed break-words whitespace-pre-wrap text-sm font-semibold">
+                              {para}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => triggerTts(para, `passage-para-${idx}`)}
+                            className="absolute right-2 top-2 p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-705 text-slate-500 dark:text-white rounded-lg flex items-center justify-center cursor-pointer transition-all border-none opacity-60 hover:opacity-100"
+                            title="Listen to this paragraph"
+                          >
+                            {ttsLoadingId === `passage-para-${idx}` ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-500" />
+                            ) : (
+                              <Volume2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <p 
+                          key={idx} 
+                          className="text-right font-fa font-bold opacity-90 text-sm border-r-2 border-indigo-500/40 pr-3.5 py-1.5 whitespace-pre-wrap leading-relaxed text-slate-800 dark:text-slate-205 mb-2"
+                          dir="rtl"
+                        >
+                          {para}
+                        </p>
+                      );
+                    }
                   })}
                 </div>
               </div>
