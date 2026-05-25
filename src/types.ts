@@ -46,6 +46,7 @@ export interface FinalAnswerItem {
 
 export interface AnalysisPayload {
   step1_questionType: string;
+  passageTitle?: string;
   fullPassageTranslation: string;
   step2_collocations: CollocationItem[];
   step2_hardWords?: HardWordItem[];

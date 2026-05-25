@@ -6,12 +6,13 @@ Analyze the provided screenshots of a PTE Core Reading question. Extract the con
 
 CRITICAL INSTRUCTIONS FOR ANALYSIS:
 1. Identify the question type accurately (e.g., Fill in the Blanks (Reading), Fill in the Blanks (Reading & Writing), Reorder Paragraphs, or Multiple Choice).
-2. Read the entire passage carefully. Provide a full English extraction and a beautifully fluent, cohesive, natural Persian translation.
-3. Extract 4 to 8 critical vocabulary items, collocations, or academic expressions found in the text, translating and explaining their importance. Additionally, extract 4 to 8 difficult or hard academic words ("hard words") found in the passage, providing their phonetic transcription/pronunciation, Persian meaning, and an English example sentence.
-4. Break down the passage sentence-by-sentence. Discuss grammatical structure, role in the paragraph, and any signal words.
-5. Provide a detailed analysis of options for EACH blank, explaining clearly in Persian why incorrect options are wrong and why correct ones are right based on syntax and meaning.
-6. Share 3 to 5 clear, actionable grammar tips or gold-key patterns inspired by the text.
-7. Output final answers with confidence level (HIGH/MEDIUM/LOW) and reasoning.`;
+2. Generate a highly descriptive, academic-style short title (2 to 5 words, e.g., "Global Trade Dynamics", "The Reality of Language") characterizing the passage essence.
+3. Read the entire passage carefully. Provide a full English extraction and a beautifully fluent, cohesive, natural Persian translation.
+4. Extract 4 to 8 critical vocabulary items, collocations, or academic expressions found in the text, translating and explaining their importance. Additionally, extract 4 to 8 difficult or hard academic words ("hard words") found in the passage, providing their phonetic transcription/pronunciation, Persian meaning, and an English example sentence.
+5. Break down the passage sentence-by-sentence. Discuss grammatical structure, role in the paragraph, and any signal words.
+6. Provide a detailed analysis of options for EACH blank, explaining clearly in Persian why incorrect options are wrong and why correct ones are right based on syntax and meaning.
+7. Share 3 to 5 clear, actionable grammar tips or gold-key patterns inspired by the text.
+8. Output final answers with confidence level (HIGH/MEDIUM/LOW) and reasoning.`;
 
 // A plain-text description of the required JSON, appended to the prompt for
 // providers (OpenRouter) that don't support a strict response schema object.
@@ -19,6 +20,7 @@ export const JSON_SHAPE_INSTRUCTIONS = `
 Respond with a SINGLE valid JSON object (no markdown fences, no commentary) using EXACTLY this shape:
 {
   "step1_questionType": string,
+  "passageTitle": string, // a short 2-5 word academic-style title summarizing the passage
   "fullPassageTranslation": string, // full English passage, a blank line, then the cohesive Persian translation
   "step2_collocations": [ { "englishCollocation": string, "persianMeaning": string, "importance": string, "example": string } ],
   "step2_hardWords": [ { "word": string, "phonetic": string, "meaning": string, "example": string } ],
@@ -33,6 +35,7 @@ All Persian text must be fluent and natural. Do not omit any top-level key.`;
 
 export const REQUIRED_KEYS = [
   "step1_questionType",
+  "passageTitle",
   "fullPassageTranslation",
   "step2_collocations",
   "step2_hardWords",

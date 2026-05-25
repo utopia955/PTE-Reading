@@ -98,6 +98,7 @@ const GOOGLE_RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
     step1_questionType: { type: Type.STRING },
+    passageTitle: { type: Type.STRING },
     fullPassageTranslation: {
       type: Type.STRING,
       description:

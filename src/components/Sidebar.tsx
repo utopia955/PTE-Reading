@@ -70,6 +70,36 @@ export default function Sidebar({
     });
   }, [questions, activeFilter, searchQuery]);
 
+  // Helper to resolve title dynamically when saved title is generic or repetitive
+  const getDisplayTitle = (item: SavedQuestion) => {
+    const isGeneric = !item.title || 
+      item.title === "Fill in the Blanks (Reading)" || 
+      item.title === "Fill in the Blanks (Reading & Writing)" || 
+      item.title === "Reorder Paragraphs" || 
+      item.title === "Multiple Choice" ||
+      item.title.startsWith("Question type:");
+    
+    if (isGeneric && item.rawResponse) {
+      try {
+        const parsed = JSON.parse(item.rawResponse);
+        if (parsed.passageTitle) {
+          return parsed.passageTitle;
+        }
+        if (parsed.fullPassageTranslation) {
+          const englishPart = parsed.fullPassageTranslation.split("\n\n")[0];
+          const cleanText = englishPart.replace(/[^\w\s-]/g, ' ');
+          const words = cleanText.split(/\s+/).filter(Boolean).slice(0, 5);
+          if (words.length > 0) {
+            return words.map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+          }
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    return item.title || "Reading Analysis";
+  };
+
   return (
     <aside
       id="sidebar"
@@ -261,9 +291,9 @@ export default function Sidebar({
                   </div>
                   <h5
                     className="text-xs font-bold leading-relaxed text-left truncate text-slate-900 dark:text-slate-150"
-                    title={item.title}
+                    title={getDisplayTitle(item)}
                   >
-                    {item.title || "Reading Analysis"}
+                    {getDisplayTitle(item)}
                   </h5>
                   {item.note && (
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 text-left line-clamp-1 leading-normal bg-slate-50 dark:bg-slate-950/30 p-1.5 rounded border border-slate-100 dark:border-slate-800/40">

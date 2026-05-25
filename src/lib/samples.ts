@@ -2,13 +2,14 @@ import { SavedQuestion } from "../types";
 
 export const sampleQuestions: { [key: number]: Omit<SavedQuestion, "id" | "date" | "timestamp"> } = {
   1: {
-    title: "Question type: Fill in the Blanks (Reading)",
+    title: "Global Trade Networks",
     category: "FIB-R",
     note: "نمونه متداول سوال ریدینگ جای خالی. به ساختار حروف اضافه دقت شود.",
     status: "needs-review",
     images: ["https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400"],
     rawResponse: JSON.stringify({
       step1_questionType: "Fill in the Blanks (Reading)",
+      passageTitle: "Global Trade Networks",
       fullPassageTranslation: "Global trade networks have expanded rapidly in the last century, which has forced many organizations to adapt to diverse international regulations and reach a compromise to minimize risks. This connection has had a profound impact on social structures worldwide.\n\nشبکه‌های تجارت جهانی در قرن گذشته به سرعت گسترش یافته‌اند، که این امر بسیاری از سازمان‌ها را مجبور کرده است تا خود را با مقررات متنوع بین‌المللی سازگار کنند و برای به حداقل رساندن ریسک‌ها به یک مصالحه یا توافق برسند. این پیوندهای متقابل، تأثیر عمیقی بر ساختارهای اجتماعی در سراسر جهان گذاشته است.",
       step2_collocations: [
         {
@@ -106,13 +107,14 @@ export const sampleQuestions: { [key: number]: Omit<SavedQuestion, "id" | "date"
     })
   },
   2: {
-    title: "Question type: Fill in the Blanks (Reading & Writing)",
+    title: "Reality & Language Perception",
     category: "FIB-RW",
     note: "نمونه سوالات ریدینگ اند رایتینگ بخش گرامر و کلمات هم‌نشین.",
     status: "mastered",
     images: ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=400"],
     rawResponse: JSON.stringify({
       step1_questionType: "Fill in the Blanks (Reading & Writing)",
+      passageTitle: "Reality & Language Perception",
       fullPassageTranslation: "Language does not merely reflect reality; it also shapes how we perceive the universe around us and accurately conveys meanings. Those who can pass on information effectively are highly regarded.\n\nزبان صرفاً واقعیت را منعکس نمی‌کند؛ بلکه به نحوه درک ما از جهان اطراف به شکلی فعالانه شکل می‌دهد و معانی را به درستی انتقال می‌دهد. افرادی که می‌توانند اطلاعات را به شکلی کارآمد به دیگران منتقل کنند، بسیار مورد توجه هستند.",
       step2_collocations: [
         {

@@ -323,7 +323,7 @@ export default function App() {
         : "FIB-R";
 
       const questionId = `question-${Date.now()}`;
-      const titleCandidate = reportPayload.step1_questionType || `PTE Analysis ${new Date().toLocaleDateString("en-US")}`;
+      const titleCandidate = reportPayload.passageTitle || reportPayload.step1_questionType || `PTE Analysis ${new Date().toLocaleDateString("en-US")}`;
 
       const savedItem: SavedQuestion = {
         id: questionId,
