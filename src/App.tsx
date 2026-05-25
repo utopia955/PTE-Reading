@@ -287,14 +287,22 @@ export default function App() {
           msg = "Analysis timed out (Vercel gateway timeout). Please try again or choose a faster model like Gemini 3.1 Flash Lite.";
         } else {
           try {
-            const errBody = await res.json();
+            const errText = await res.text();
+            let errBody;
+            try {
+              errBody = JSON.parse(errText);
+            } catch (e) {
+              console.error("Non-JSON Error Response:", errText);
+              throw new Error(`Parsing failed. Body: ${errText.substring(0, 50)}`);
+            }
+            
             if (errBody?.error) {
               msg = errBody.error;
             } else {
               msg = `Backend serverless function issue (HTTP ${res.status}). Ensure your server environment keys are set up correctly on Vercel.`;
             }
-          } catch {
-            msg = `Backend status failed (HTTP ${res.status}). Verify your API key in the settings panel or check your Vercel deployment logs.`;
+          } catch (e) {
+            msg = `Backend status failed (HTTP ${res.status}). Details: ${(e as Error).message}. Verify your API key in the settings panel or check your Vercel deployment logs.`;
           }
         }
         throw new Error(msg);

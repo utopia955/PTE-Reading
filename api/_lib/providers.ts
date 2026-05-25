@@ -254,9 +254,26 @@ export async function runAnalysis(args: AnalyzeArgs): Promise<any> {
     const where = args.provider === "openrouter" ? "OpenRouter" : "Google";
     throw new Error(`Missing ${where} API key. Add one in Settings or configure it on the server.`);
   }
-  return args.provider === "openrouter"
-    ? runOpenRouterAnalysis(args, apiKey)
-    : runGoogleAnalysis(args, apiKey);
+  try {
+    return await (args.provider === "openrouter"
+      ? runOpenRouterAnalysis(args, apiKey)
+      : runGoogleAnalysis(args, apiKey));
+  } catch (error: any) {
+    console.error(`[runAnalysis Error] provider=${args.provider}`, error);
+    // GenAI SDK errors often have a stringified JSON in message, extract readable text if possible
+    let msg = error?.message || String(error);
+    try {
+      if (msg.startsWith("{") && msg.includes('"error"')) {
+        const parsed = JSON.parse(msg);
+        if (parsed.error?.message) {
+          msg = parsed.error.message;
+        }
+      }
+    } catch {
+      // Keep original msg
+    }
+    throw new Error(msg);
+  }
 }
 
 // --- Text to speech (Google only; the client falls back to Web Speech) ---

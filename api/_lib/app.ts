@@ -55,5 +55,13 @@ export function createApiApp(): Express {
     }
   });
 
+  // Global Error Handler to catch express.json() errors (like PayloadTooLarge)
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("Global API Error:", err);
+    const status = err.status || 500;
+    const message = err.message || "An internal error occurred.";
+    res.status(status).json({ error: message });
+  });
+
   return app;
 }
